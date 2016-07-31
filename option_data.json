@@ -1,0 +1,278 @@
+{
+	"background_parts": {
+		"道": {
+			"data-subscript" : 0,
+			"attribute" : [
+				"待ち時間", "反応するアイテム番号", "サウンド番号", "表示メッセージ", "指定位置にパーツを出現"
+			]
+		},
+		"壁": {
+			"data-subscript" : 1,
+			"attribute" : [
+				"表示メッセージ", "指定位置にパーツを出現"
+			]
+		},
+		"ジャンプゲート": {
+			"data-subscript" : 2,
+			"attribute" : [
+				"ジャンプ先 X座標", "ジャンプ先 Y座標", "サウンド番号", "指定位置にパーツを出現"
+			]
+		},
+		"URLゲート": {
+			"data-subscript" : 4,
+			"attribute" : [
+				"リンク先のURLアドレス", "URL TARGET"
+			]
+		}
+	},
+	"object_parts": {
+		"通常物体": {
+			"data-subscript" : 0,
+			"attribute" : [
+				"通行区分", "動作属性"
+			]
+		},
+		"メッセージ": {
+			"data-subscript" : 1,
+			"attribute" : [
+				"サウンド番号", "動作属性", "待ち時間", "表示メッセージ", "指定位置にパーツを出現"
+			]
+		},
+		"モンスター": {
+			"data-subscript" : 6,
+			"attribute" : [
+				"生命力", "攻撃力", "防御力", "所持金", "モンスター所持アイテムの物体番号", "サウンド番号", "動作属性", "戦闘後表示メッセージ", "指定位置にパーツを出現"
+			]
+		},
+		"アイテム": {
+			"data-subscript" : 4,
+			"attribute" : [
+				"攻撃力", "防御力", "アイテムボックスへの格納位置", "サウンド番号", "使用属性", "動作属性", "アイテム取得後表示メッセージ", "指定位置にパーツを出現"
+			]
+		},
+		"扉": {
+			"data-subscript" : 5,
+			"attribute" : [
+				"扉の種類", "対応するアイテム(鍵)の物体番号", {
+					"通行区分": {
+						"data-subscript": 15,
+						"select": {
+							"option": [
+								{
+									"data-name": "通り抜け不可",
+									"value": 0
+								},
+								{
+									"data-name": "通り抜け可",
+									"value": 1
+								}
+							]
+						}
+					}
+				}, "サウンド番号", "動作属性", "扉開放後表示メッセージ", "指定位置にパーツを出現"
+			]
+		},
+		"ステータス変化": {
+			"data-subscript" : 3,
+			"attribute" : [
+				"生命力", "攻撃力", "防御力", "所持金", "サウンド番号", "動作属性", "アイテム取得後表示メッセージ", "指定位置にパーツを出現"
+			]
+		},
+		"物を売る": {
+			"data-subscript" : 14,
+			"attribute" : [
+				"販売金額", "売るアイテムの物体番号", "生命力", "攻撃力", "防御力", "サウンド番号", "動作属性", "表示メッセージ", "指定位置にパーツを出現"
+			]
+		},
+		"物を買う": {
+			"data-subscript" : 15,
+			"attribute" : [
+				"買い取り金額", "買うアイテムの物体番号", "サウンド番号", "動作属性", "表示メッセージ", "指定位置にパーツを出現"
+			]
+		},
+		"URLゲート": {
+			"data-subscript" : 2,
+			"attribute" : [
+				"リンク先のURLアドレス", "URL TARGET"
+			]
+		},
+		"スコア表示": {
+			"data-subscript" : 11,
+			"attribute" : [
+				"生命力×", "攻撃力×", "防御力×", "所持金×", "サウンド番号", "表示メッセージ"
+			]
+		},
+		"ランダム選択": {
+			"data-subscript" : 16
+		},
+		"二者択一": {
+			"data-subscript" : 17,
+			"attribute" : [
+				"サウンド番号", "動作属性", "表示メッセージ", "指定位置にパーツを出現（二者択一）"
+			]
+		},
+		"ジャンプゲート": {
+			"data-subscript" : 18,
+			"attribute" : [
+				"ジャンプ先 X座標", "ジャンプ先 Y座標", "サウンド番号", "指定位置にパーツを出現"
+			]
+		}
+	},
+	"variable": {
+		"通行区分": {
+			"select": {
+				"data-subscript": 4,
+				"option": [
+					{
+						"data-name": "通り抜け不可",
+						"value": 0
+					},
+					{
+						"data-name": "通り抜け可",
+						"value": 1
+					}
+				]
+			}
+		},
+		"扉の種類": {
+			"select": {
+				"data-subscript": 4,
+				"option": [
+					{
+						"data-name" : "鍵なくなる",
+						"value": 0
+					},
+					{
+						"data-name": "鍵なくならない",
+						"value": 1
+					}
+				]
+			}
+		},
+		"表示メッセージ": {
+			"textarea": {
+				"data-string": true,
+				"data-subscript": 5,
+				"maxlength": 1510,
+				"rows": 8,
+				"cols": 60
+			}
+		},
+		"戦闘後表示メッセージ": {
+			"textarea": {
+				"data-string": true,
+				"data-subscript": 5,
+				"maxlength": 1510,
+				"rows": 8,
+				"cols": 60
+			}
+		},
+		"生命力": {
+			"input": {
+				"data-subscript": 10,
+				"type": "number"
+			}
+		},
+		"攻撃力": {
+			"input": {
+				"data-subscript": 11,
+				"type": "number"
+			}
+		},
+		"防御力": {
+			"input": {
+				"data-subscript": 12,
+				"type": "number"
+			}
+		},
+		"所持金": {
+			"input": {
+				"data-subscript": 13,
+				"type": "number"
+			}
+		},
+		"販売金額": {
+			"input": {
+				"data-subscript": 13,
+				"type": "number"
+			}
+		},
+		"買い取り金額": {
+			"input": {
+				"data-subscript": 13,
+				"type": "number"
+			}
+		},
+		"モンスター所持アイテムの物体番号": {
+			"input": {
+				"data-subscript": 14,
+				"type": "number",
+				"max": 3999
+			}
+		},
+		"対応するアイテム(鍵)の物体番号": {
+			"input": {
+				"data-subscript": 14,
+				"type": "number",
+				"max": 3999
+			}
+		},
+		"売るアイテムの物体番号": {
+			"input": {
+				"data-subscript": 14,
+				"type": "number",
+				"max": 3999
+			}
+		},
+		"買うアイテムの物体番号": {
+			"input": {
+				"data-subscript": 14,
+				"type": "number",
+				"max": 3999
+			}
+		},
+		"待ち時間": {
+			"input": {
+				"data-subscript": 15,
+				"type": "number",
+				"max": 1000
+			}
+		},
+		"アイテムボックスへの格納位置": {
+			"input": {
+				"data-subscript": 15,
+				"type": "number",
+				"max": 12
+			}
+		},
+		"動作属性": {
+			"select": {
+				"data-subscript": 16,
+				"option" : [
+					{
+						"data-name": "静止",
+						"value": 0
+					},
+					{
+						"data-name": "プレーヤー追尾",
+						"value": 1
+					},
+					{
+						"data-name": "逃げる",
+						"value": 2
+					},
+					{
+						"data-name": "うろうろする",
+						"value": 3
+					}
+				]
+			}
+		},
+		"サウンド番号": {
+			"input": {
+				"data-subscript": 19,
+				"type": "number"
+			}
+		}
+	}
+}
