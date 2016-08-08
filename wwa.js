@@ -48,60 +48,13 @@ const TEXT_BROKENIMG = "画像の読み込みに失敗しました。";
 const TEXT_INPUTPASS = "パスワードを入力";
 const TEXT_WRONGPASS = "パスワードが違います。";
 
-const SHOW_WINDOW = 0;
-const CLOSE_WINDOW = 1;
-
 window.onload = function() {
-	ViewModel.prototype.newFile();
-	ViewModel.prototype.toggleWindow("open-window", SHOW_WINDOW);
+	let app = new App();
+	let viewModel = new ViewModel(app);
 }
 
 function $(id) {
 	return document.getElementById(id);
-}
-
-/**
- * 要素を生成する
- * @param {String} tag_name 生成するタグの名前
- * @param {Object} attributeAndChildNode そのタグに追加する属性と子ノードの情報
- * @return {HTMLElement} 生成された要素
- */
-function createForm(tag_name, attributeAndChildNode) {
-	const attribute_form = document.createElement(tag_name);
-	Object.keys(attributeAndChildNode).forEach((element) => {
-		let element_attribute = attributeAndChildNode[element];
-		if (typeof element_attribute === "object") {
-			/* 子ノードを追加 */
-			if (Array.isArray(element_attribute)) {
-				element_attribute.forEach((attribute) => {
-					let attribute_childForm = createForm(element, attribute);
-					attribute_childForm.textContent = attribute["data-name"] || "";
-					attribute_form.appendChild(attribute_childForm);
-				});
-			} else {
-				let attribute_childForm = createForm(element, element_attribute);
-				attribute_childForm.textContent = element_attribute["data-name"] || "";
-				attribute_form.appendChild(attribute_childForm);
-			}
-		} else {
-			/* 属性を追加 */
-			attribute_form.setAttribute(element, element_attribute);
-		}
-	});
-	return attribute_form;
-}
-
-/**
- * 親ノードから指定したタグ名を持つ子ノードを削除する
- * @param {HTMLElement} parentNode 親ノード
- * @param {String} tagName タグ名
- */
-function removeChildsByTagName(parentNode, tagName) {
-	Array.from(parentNode.children).forEach((element, index, array) => {
-		if (element.tagName === tagName) {
-			parentNode.removeChild(element);
-		}
-	});
 }
 
 /**
@@ -158,7 +111,7 @@ function decryptPass(pass) {
  * @param {String} str エスケープ化されていない文字
  * @return {String} エスケープ化された文字
  */
-function escapeString (str) {
+function escapeString(str) {
     return str
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
@@ -168,43 +121,23 @@ function escapeString (str) {
 }
 
 /**
- * バイナリから文字列を読み込む
- * @param {Array|Uint8Array} src バイナリの配列
- * @param {Array} ptr ポインタ（参照の値渡し）
- * @return {String} 文字列
+ * オブジェクトのインスタンスが背景か物体かを判断し指定されたオブジェクトを返す
+ * @param {Object} instance インスタンスを判断するオブジェクト
+ * @param {Object} bkg 背景だった場合に返すオブジェクト
+ * @param {Object} obj 物体だった場合に返すオブジェクト
+ * @return {Object} bkg | obj
  */
-function loadString(src, ptr) {
-	let length;
-	let buffer = "";
-	for(length = 0; length < (MAX_STRING_SIZE / 2 - 1); length++){
-	
-		if( (src[ptr[0] + length * 2] == 0) && (src[ptr[0] + length * 2 + 1] == 0) ) {
-			ptr[0] += length * 2 + 2;
-			break;
-		}
-		buffer += String.fromCharCode(uint8to16(src, ptr[0] + length * 2));
-	}
-	
-	return escapeString(buffer);
-}
-
-/**
- * バイナリから文字列を読み込む
- * @param {Array|Uint8Array} src バイナリの配列
- * @param {Array} ptr ポインタ（参照の値渡し）
- * @return {String} 文字列
- */
-function saveStr(src, str) {
-	let i, str_;
-	let buffer = "";
-	for (i = 0; i < str.length; i++) {
-		str_ = str.charCodeAt(i)
-		if (str_ === 0x0D) {
-			continue;
-		}
-		uint16to8(src, str_, src.length)
-	}
-	src.push(0, 0);
+function determineVariable(instance, bkg, obj) {
+	let element;
+	if (instance.constructor === Bkg) {
+		element = bkg;
+	} else if (instance.constructor === Obj) {
+		element = obj;
+	} else {
+		console.error(instance.constructor);
+		throw new Error ("想定外なオブジェクト");
+	};
+	return element;
 }
 
 /**
@@ -212,53 +145,39 @@ function saveStr(src, str) {
  * @constructor
  */
 function App() {
-	this.isLoaded = false;
-	
 	this.player = new Player();
 	this.obj = new Obj();
-	this.obj.elements = {
-		editor: $("map_object")
-	};
 	this.bkg = new Bkg();
-	this.bkg.elements = {
-		editor: $("map_background")
-	};
 	this.draw = new Draw();
 	
 	this.fileName = null;
+	this.imgFileName = null;
+	this.worldName = null;
 	this.pass = null;
 	this.mapSize = 101;
 	this.item = new Uint8Array(MAX_ITEM);
 	
 	this.message = [];
-	
-	let appReady = setInterval(() => {
-		if (this.isLoaded) {
-			Array.from(document.querySelectorAll("[data-main-canvas]")).forEach((element) => {
-				element.hidden = false;
-				element.width = OBJECT_SIZE * this.mapSize;
-				element.height = OBJECT_SIZE * this.mapSize;
-			});
-			if (!$("message").hidden) {
-				$("message").hidden = true;
-			};
-			this.draw.mapSize = this.mapSize;
-			this.draw.bkg = this.bkg;
-			this.draw.obj = this.obj;
-			if (this.draw.imgLoaded) {
-				this.draw.draw();
-				clearInterval(appReady);
-			};
-		}
-	}, 10);
 }
 
 App.prototype = {
-	newFile : function() {
-		this.isLoaded = true;
+	newFile : function(imgFile) {
+		this.bkg = new Bkg();
+		this.bkg.newFile(this.mapSize);
+		this.obj = new Obj();
+		this.obj.newFile(this.mapSize);
+		
+		this.mapSize = 101;
+		this.fileName = "newmap.dat";
+		this.imgFileName = imgFile.name;
+		this.worldName = "";
+		this.pass = "";
+		this.sysMsg = new Array(20).fill("");
+		
+		this.draw.init(this.bkg, this.obj, this.mapSize, imgFile);
 	},
 	
-	openFile : function(map, str, fileName) {
+	openFile : function(map, str, fileName, imgFile) {
 		let dummy, dat;
 		let mapByte = 90;
 		let objByte;
@@ -266,7 +185,6 @@ App.prototype = {
 		let numBkg = uint8to16(map, DATA_BKG_LENGTH);
 		let numObj = uint8to16(map, DATA_OBJ_LENGTH);
 		let numMsg = uint8to16(map, DATA_MSG_LENGTH);
-		
 		
 		this.mapSize = uint8to16(map, 46);
 		this.fileName = fileName;
@@ -315,7 +233,7 @@ App.prototype = {
 			}
 		}
 		
-		this.pass = loadString(str, ptr);
+		this.pass = this.loadString(str, ptr);
 		if (this.pass.length > 0) {
 			inputPass = prompt(TEXT_INPUTPASS);
 			if (inputPass !== decryptPass(this.pass)) {
@@ -325,21 +243,22 @@ App.prototype = {
 		}
 		
 		for (let i = 0; i < numMsg; i++) {
-			this.message[i] = loadString(str, ptr);
+			this.message[i] = this.loadString(str, ptr);
 		}
-		this.worldName = loadString(str, ptr);
+		this.worldName = this.loadString(str, ptr);
 		
 		/* 現在のバージョンでは利用されていないため無視 */
-		dummy = loadString(str, ptr);
-		dummy = loadString(str, ptr);
+		dummy = this.loadString(str, ptr);
+		dummy = this.loadString(str, ptr);
 		
-		this.imgFileName = loadString(str, ptr);
-
+		this.imgFileName = this.loadString(str, ptr);
+		
 		this.sysMsg = [];
 		for (let i = 0; i < 20; i++) {
-			this.sysMsg[i] = loadString(str, ptr);
+			this.sysMsg[i] = this.loadString(str, ptr);
 		}
-		this.isLoaded = true;
+		
+		this.draw.init(this.bkg, this.obj, this.mapSize, imgFile);
 	},
 	
 	saveFile : function() {
@@ -414,16 +333,16 @@ App.prototype = {
 		uint16to8(mapArray, getHash(mapArray), DATA_CHECK);
 		
 		/* メッセージの読み込み */
-		saveStr(strArray, this.pass);
+		this.saveStr(strArray, this.pass);
 		for (i = 0; i < this.message.length; i++) {
-			saveStr(strArray, this.message[i]);
+			this.saveStr(strArray, this.message[i]);
 		}
-		saveStr(strArray, this.worldName);
-		saveStr(strArray, ""); // 旧バージョンにて利用
-		saveStr(strArray, ""); // 旧バージョンにて利用
-		saveStr(strArray, this.imgFileName);
+		this.saveStr(strArray, this.worldName);
+		this.saveStr(strArray, ""); // 旧バージョンにて利用
+		this.saveStr(strArray, ""); // 旧バージョンにて利用
+		this.saveStr(strArray, this.imgFileName);
 		for (i = 0; i < 20; i++) {
-			saveStr(strArray, this.sysMsg[i]);
+			this.saveStr(strArray, this.sysMsg[i]);
 		}
 		worker.postMessage({
 			map : mapArray,
@@ -446,13 +365,53 @@ App.prototype = {
 		let dataCheck = uint8to16(map, DATA_CHECK);
 		let dataVersion = map[2];
 		if (dataVersion <= 29) {
-			this.draw.showText(TEXT_NOTSUPPORT);
+			alert(TEXT_NOTSUPPORT);
 			throw new Error (TEXT_NOTSUPPORT);
 		}
 		if (getHash(map) !== dataCheck) {
-			this.draw.showText(TEXT_BROKENDATA);
+			alert(TEXT_BROKENDATA);
 			throw new Error (TEXT_BROKENDATA);
 		}
+	},
+	
+	/**
+	* バイナリから文字列を読み込む
+	* @param {Array|Uint8Array} src バイナリの配列
+	* @param {Array} ptr ポインタ（参照の値渡し）
+	* @return {String} 文字列
+	*/
+	loadString : function(src, ptr) {
+		let length;
+		let buffer = "";
+		for(length = 0; length < (MAX_STRING_SIZE / 2 - 1); length++){
+
+			if( (src[ptr[0] + length * 2] == 0) && (src[ptr[0] + length * 2 + 1] == 0) ) {
+				ptr[0] += length * 2 + 2;
+				break;
+			}
+			buffer += String.fromCharCode(uint8to16(src, ptr[0] + length * 2));
+		}
+
+		return escapeString(buffer);
+	},
+	
+	/**
+	* バイナリから文字列を読み込む
+	* @param {Array|Uint8Array} src バイナリの配列
+	* @param {Array} ptr ポインタ（参照の値渡し）
+	* @return {String} 文字列
+	*/
+	saveStr : function(src, str) {
+		let i, str_;
+		let buffer = "";
+		for (i = 0; i < str.length; i++) {
+			str_ = str.charCodeAt(i)
+			if (str_ === 0x0D) {
+				continue;
+			}
+			uint16to8(src, str_, src.length)
+		}
+		src.push(0, 0);
 	}
 }
 
@@ -460,37 +419,56 @@ App.prototype = {
  * 描画を表す
  * @constructor
  */
-function Draw() {
-	this.bkg = null;
-	this.obj = null;
-	this.imgFileName = null;
-	this.mapSize = null;
+function Draw(bkg, obj, mapSize) {
+	this.bkg = bkg;
+	this.obj = obj;
+	this.mapSize = mapSize;
 	this.img = new Image();
-	this.imgLoaded = false;
+	
+	Array.from(document.querySelectorAll("[data-main-canvas]")).forEach((element) => {
+		element.hidden = false;
+		element.width = OBJECT_SIZE * this.mapSize;
+		element.height = OBJECT_SIZE * this.mapSize;
+	});
 	
 	this.img.onload = () => {
-		this.imgLoaded = true;
+		this.draw.draw();
 	};
 }
 
 Draw.prototype = {
-	showText : function(text) {
-		$("message").hidden = false;
-		$("message").textContent = text;
+	init : function(bkg, obj, mapSize, image) {
+		let bufferImg = new FileReader();
+		this.bkg = bkg;
+		this.obj = obj;
+		this.mapSize = mapSize;
+		this.img = new Image();
+		this.img.onload = () => {
+			this.draw();
+		};
+		Array.from(document.querySelectorAll("[data-main-canvas]")).forEach((element) => {
+			element.hidden = false;
+			element.width = OBJECT_SIZE * this.mapSize;
+			element.height = OBJECT_SIZE * this.mapSize;
+		});
+		bufferImg.readAsDataURL(image);
+		bufferImg.onload = (e) => {
+			this.img.src = e.target.result;
+		};
 	},
 	
 	draw : function() {
 		this.drawParts(this.bkg);
-		this.drawParts(this.obj);
+		this.drawParts(this.obj)
 		//this.drawPlayer();
 		this.drawGrid();
 		
-		this.drawSelector(this.bkg, $("selector-bkg"));
-		this.drawSelector(this.obj, $("selector-obj"));
+		this.drawSelector(this.bkg);
+		this.drawSelector(this.obj);
 	},
 	
 	drawParts : function(type) {
-		let element = type.elements.editor;
+		let element = determineVariable(type, $("map_background"), $("map_object"));
 		let ctx = element.getContext('2d');
 		ctx.clearRect(0, 0, element.width, element.height);
 		for (let x = 0; x < this.mapSize; x++) {
@@ -518,18 +496,19 @@ Draw.prototype = {
 		};
 	},
 	
-	drawSelector : function(type, elem) {
+	drawSelector : function(type) {
 		let sx, sy, sw, sh, dx, dy, dw, dh;
-		let ctx = elem.getContext('2d');
-		elem.width = OBJECT_SIZE * 10;
-		elem.height = MAX_PARTS * OBJECT_SIZE / elem.width * OBJECT_SIZE;
+		let element = determineVariable(type, $("selector-bkg"), $("selector-obj"));
+		let ctx = element.getContext('2d');
+		element.width = OBJECT_SIZE * 10;
+		element.height = MAX_PARTS * OBJECT_SIZE / element.width * OBJECT_SIZE;
 		for(let id = 0; id < type.attribute.length; id++) {
 			sx = type.getSX(id);
 			sy = type.getSY(id);
 			sw = OBJECT_SIZE;
 			sh = OBJECT_SIZE;
-			dx = Math.floor(id * OBJECT_SIZE % elem.width);
-			dy = Math.floor(id * OBJECT_SIZE / elem.width) * OBJECT_SIZE;
+			dx = Math.floor(id * OBJECT_SIZE % element.width);
+			dy = Math.floor(id * OBJECT_SIZE / element.width) * OBJECT_SIZE;
 			dw = OBJECT_SIZE;
 			dh = OBJECT_SIZE;
 			ctx.drawImage(this.img, sx, sy, sw, sh, dx, dy, dw, dh);
@@ -549,6 +528,12 @@ Draw.prototype = {
 		element.hidden = (id === 0);
 		ctx.clearRect(dx, dy, dw, dh);
 		ctx.drawImage(this.img, sx, sy, sw, sh, dx, dy, dw, dh);
+	},
+	
+	drawSelectedParts : function(id) {
+		this.imageSet($("obj-image1"), this.obj, id.obj, 1);
+		this.imageSet($("obj-image2"), this.obj, id.obj, 2);
+		this.imageSet($("bkg-image"), this.bkg, id.bkg);
 	},
 	
 	drawGrid : function() {
@@ -601,6 +586,9 @@ function Parts() {
 }
 
 Parts.prototype = {
+	newFile : function(mapSize) {
+		this.mapData = new Array(mapSize).fill(new Array(mapSize).fill(0));
+	},
 	getSX : function(id, frame = 1) {
 		let image = frame === 1 ? DATA_PROP_X : DATA_PROP_X2;
 		return this.attribute[id][image];
@@ -638,22 +626,26 @@ function Player() {
 /**
  * 背景パーツを表す
  * @constructor
+ * @extends Parts
  */
 function Bkg(type) {
 	Parts.apply(this);
 }
 
 Bkg.prototype = Object.create(Parts.prototype);
+Bkg.prototype.constructor = Bkg;
 
 /**
  * 物体パーツを表す
  * @constructor
+ * @extends Parts
  */
 function Obj(type) {
 	Parts.apply(this);
 }
 
 Obj.prototype = Object.create(Parts.prototype);
+Obj.prototype.constructor = Obj;
 
 /**
  * マップデータの情報を描画に伝達する
@@ -683,7 +675,8 @@ function ViewModel(app) {
 		set: (id) => {
 			selectedBkgID_ = id;
 			this.typeSet(document.querySelector('*[data-parts="background_parts"]'), id);
-			this.app.draw.imageSet($("bkg-image"), this.app.bkg, id);
+			this.app.draw.imageSet($("obj-image1"), this.app.bkg, id, 1);
+			this.app.draw.imageSet($("obj-image2"), this.app.bkg, id, 2);
 		},
 		get: () => {
 			return selectedBkgID_;
@@ -747,16 +740,60 @@ ViewModel.prototype = {
 		}
 	},
 	
+	/**
+	* 要素を生成する
+	* @param {String} tag_name 生成するタグの名前
+	* @param {Object} attributeAndChildNode そのタグに追加する属性と子ノードの情報
+	* @return {HTMLElement} 生成された要素
+	*/
+	createForm : function(tag_name, attributeAndChildNode) {
+		const attribute_form = document.createElement(tag_name);
+		Object.keys(attributeAndChildNode).forEach((element) => {
+			let element_attribute = attributeAndChildNode[element];
+			if (typeof element_attribute === "object") {
+				/* 子ノードを追加 */
+				if (Array.isArray(element_attribute)) {
+					element_attribute.forEach((attribute) => {
+						let attribute_childForm = this.createForm(element, attribute);
+						attribute_childForm.textContent = attribute["data-name"] || "";
+						attribute_form.appendChild(attribute_childForm);
+					});
+				} else {
+					let attribute_childForm = this.createForm(element, element_attribute);
+					attribute_childForm.textContent = element_attribute["data-name"] || "";
+					attribute_form.appendChild(attribute_childForm);
+				}
+			} else {
+				/* 属性を追加 */
+				attribute_form.setAttribute(element, element_attribute);
+			}
+		});
+		return attribute_form;
+	},
+
+	/**
+	* 親ノードから指定したタグ名を持つ子ノードを削除する
+	* @param {HTMLElement} parentNode 親ノード
+	* @param {String} tagName タグ名
+	*/
+	removeChildsByTagName : function(parentNode, tagName) {
+		Array.from(parentNode.children).forEach((element, index, array) => {
+			if (element.tagName === tagName) {
+				parentNode.removeChild(element);
+			}
+		});
+	},
+	
 	createPartSettingWindow : function(e) {
 		const target = e.target || e;
 		const selected_option = target.options[target.selectedIndex];
 		const variable = JSON.parse(target.dataset.variable);
-		removeChildsByTagName(target.parentNode, "LABEL");
+		this.removeChildsByTagName(target.parentNode, "LABEL");
 		for (let attribute of JSON.parse(selected_option.dataset.attribute)["attribute"]) {
 			const attribute_name = document.createElement('label');
 			attribute_name.textContent = attribute;
 			for (let tag_name in variable[attribute]) {
-				let attribute_form = createForm(tag_name, variable[attribute][tag_name]);
+				let attribute_form = this.createForm(tag_name, variable[attribute][tag_name]);
 				let group = target.dataset.group;
 				let id = this.selectedID[group];
 				let value = this.app[group]["attribute"][id][attribute_form.dataset.subscript];
@@ -785,7 +822,7 @@ ViewModel.prototype = {
 		elem.class = "popup";
 		elem.id = "image-window";
 		elem.src = this.app.draw.img.src;
-		elem.dataset.group = e.target.dataset.group; 
+		elem.dataset.group = e.target.dataset.group;
 		elem.dataset.frame = e.target.dataset.frame;
 		elem.style.background = "white";
 		elem.style.position = "absolute";
@@ -793,8 +830,6 @@ ViewModel.prototype = {
 		elem.style.left = e.clientY + "px";
 		elem.addEventListener("click", this.imageSelectorClicked.bind(this), false);
 		document.body.appendChild(elem);
-		
-		this.toggleWindow("image-window", SHOW_WINDOW);
 	},
 	
 	imageSelectorClicked : function(e) {
@@ -802,8 +837,9 @@ ViewModel.prototype = {
 		let y = Math.floor(e.layerY / OBJECT_SIZE) * OBJECT_SIZE;
 		this.app[e.target.dataset.group]["setSXSY"](this.selectedID[e.target.dataset.group], parseInt(e.target.dataset.frame), x, y);
 		this.app.draw.drawParts(this.app[e.target.dataset.group]);
-		
-		this.toggleWindow("image-window", CLOSE_WINDOW);
+		this.app.draw.drawSelector(this.app[e.target.dataset.group]);
+		this.app.draw.drawSelectedParts(this.selectedID);
+		document.body.removeChild($("image-window"))
 	},
 	
 	changeMode : function(e) {
@@ -815,12 +851,12 @@ ViewModel.prototype = {
 		element.value = this.app[element.dataset.group]["attribute"][id][PARTS_TYPE_OFFSET];
 		this.createPartSettingWindow(element);
 	},
-
+	
 	toggleWindow : function(e, force) {
 		let data_window = $(e) || $(e.target.dataset.window);
 		let left = (window.innerWidth - DIALOG_WIDTH) / 2;
 		let top = (window.innerHeight - DIALOG_HEIGHT) / 2;
-		if (typeof force !== "undefined") {
+		if (typeof force === "boolean") {
 			data_window.hidden = force;
 		} else {
 			data_window.hidden = !data_window.hidden;
@@ -828,21 +864,20 @@ ViewModel.prototype = {
 		data_window.style.left = (left > 0 ? left : 0) + "px";
 		data_window.style.top =  (top > 0 ? top : 0) + "px";
 	},
-
+	
 	newFile: function(e) {
-		let app = new App();
-		let viewModel = new ViewModel(app);
+		let imgFile = $("new-img").files[0];
+		this.app.newFile(imgFile);
+		this.toggleWindow("new-window");
 	},
-
+	
 	openFile : function(e) {
 		let datFile = $("open-dat").files[0];
 		let imgFile = $("open-img").files[0];
 		let bufferData = new FileReader();
-		let bufferImg = new FileReader();
 		this.toggleWindow("open-window");
 		
 		bufferData.readAsArrayBuffer(datFile);
-		bufferImg.readAsDataURL(imgFile);
 		
 		bufferData.onload = (e) => {
 			let worker = new Worker("decompress.js");
@@ -850,18 +885,15 @@ ViewModel.prototype = {
 			worker.postMessage(dataArray, [dataArray]);
 			worker.onmessage = (e) => {
 				this.app.checkFile(e.data.map);
-				this.app.openFile(e.data.map, e.data.str, datFile.name);
+				this.app.openFile(e.data.map, e.data.str, datFile.name, imgFile);
 			};
 		};
-		bufferImg.onload = (e) => {
-			this.app.draw.img.src = e.target.result;
-		};
 	},
-
+	
 	saveFile : function(e) {
 		this.app.saveFile();
 	},
-
+	
 	partsClicked : function(e) {
 		this.writePartsData(this.app.bkg.attribute[this.selectedID.bkg], "bkg");
 		this.writePartsData(this.app.obj.attribute[this.selectedID.obj], "obj");
@@ -873,7 +905,7 @@ ViewModel.prototype = {
 			this.editPart(e);
 		};
 	},
-
+	
 	insertPart : function(e, element) {
 		let x = Math.floor(e.layerX / OBJECT_SIZE);
 		let y = Math.floor(e.layerY / OBJECT_SIZE);
@@ -881,15 +913,16 @@ ViewModel.prototype = {
 		this.app[group]["mapData"][y][x] = this.selectedID[group];
 		this.app.draw.drawPart(element, this.app[group], x, y);
 	},
-
+	
 	editPart : function(e) {
 		let x = Math.floor(e.layerX / OBJECT_SIZE);
 		let y = Math.floor(e.layerY / OBJECT_SIZE);
 		
 		this.selectedID.bkg = this.app.bkg.mapData[y][x];
 		this.selectedID.obj = this.app.obj.mapData[y][x];
+		this.app.draw.drawSelectedParts(this.selectedID);
 	},
-
+	
 	selectorClicked : function(e) {
 		let x = Math.floor(e.layerX / OBJECT_SIZE);
 		let y = Math.floor(e.layerY / OBJECT_SIZE);
@@ -900,21 +933,28 @@ ViewModel.prototype = {
 		this.writePartsData(this.app.bkg.attribute[this.selectedID.bkg], "bkg");
 		this.writePartsData(this.app.obj.attribute[this.selectedID.obj], "obj");
 		this.selectedID[type] = 10 * y + x;
+		this.app.draw.drawSelectedParts(this.selectedID);
 	},
-
-	writePartsData : function(type, group) {
+	
+	writePartsData : function(attribute, group) {
+		Array.from(document.querySelectorAll("[data-parts]")).forEach((element) => {
+			if (element.dataset.group === group) {
+				attribute[PARTS_TYPE_OFFSET] = element.value;
+			};
+		});
 		Array.from(document.querySelectorAll("[data-subscript]")).forEach((element) => {
 			if (element.parentNode.dataset.group === group) {
 				if (element.dataset.string) {
 					if (element.dataset.messageid === "0" && element.value !== "") {
+						/* 何もメッセージが入力されていなかったパーツにメッセージが入力された場合 */
 						this.app.message.push(element.value);
 						element.dataset.messageid = this.app.message.length - 1;
 					}
 					this.app.message[element.dataset.messageid] = element.value;
-					type[element.dataset.subscript] = element.dataset.messageid;
+					attribute[element.dataset.subscript] = element.dataset.messageid;
 				} else {
-					type[element.dataset.subscript] = element.value;
-				}
+					attribute[element.dataset.subscript] = element.value;
+				};
 			};
 		});
 	}
