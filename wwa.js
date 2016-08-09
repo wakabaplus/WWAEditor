@@ -107,20 +107,6 @@ function decryptPass(pass) {
 }
 
 /**
- * 文字をエスケープ化する
- * @param {String} str エスケープ化されていない文字
- * @return {String} エスケープ化された文字
- */
-function escapeString(str) {
-    return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\"/g, '&quot;')
-      .replace(/\'/g, '&#39;');
-}
-
-/**
  * オブジェクトのインスタンスが背景か物体かを判断し指定されたオブジェクトを返す
  * @param {Object} instance インスタンスを判断するオブジェクト
  * @param {Object} bkg 背景だった場合に返すオブジェクト
@@ -173,8 +159,9 @@ App.prototype = {
 		this.worldName = "";
 		this.pass = "";
 		this.sysMsg = new Array(20).fill("");
-		
-		this.draw.init(this.bkg, this.obj, this.mapSize, imgFile);
+		this.message[0] = "";
+
+		this.draw.init(this.bkg, this.obj, this.player, this.mapSize, imgFile);
 	},
 	
 	openFile : function(map, str, fileName, imgFile) {
@@ -258,7 +245,7 @@ App.prototype = {
 			this.sysMsg[i] = this.loadString(str, ptr);
 		}
 		
-		this.draw.init(this.bkg, this.obj, this.mapSize, imgFile);
+		this.draw.init(this.bkg, this.obj, this.player, this.mapSize, imgFile);
 	},
 	
 	saveFile : function() {
@@ -392,7 +379,7 @@ App.prototype = {
 			buffer += String.fromCharCode(uint8to16(src, ptr[0] + length * 2));
 		}
 
-		return escapeString(buffer);
+		return buffer;
 	},
 	
 	/**
@@ -437,10 +424,11 @@ function Draw(bkg, obj, mapSize) {
 }
 
 Draw.prototype = {
-	init : function(bkg, obj, mapSize, image) {
+	init : function(bkg, obj, player, mapSize, image) {
 		let bufferImg = new FileReader();
 		this.bkg = bkg;
 		this.obj = obj;
+		this.player = player;
 		this.mapSize = mapSize;
 		this.img = new Image();
 		this.img.onload = () => {
@@ -460,7 +448,7 @@ Draw.prototype = {
 	draw : function() {
 		this.drawParts(this.bkg);
 		this.drawParts(this.obj)
-		//this.drawPlayer();
+		this.drawPlayer();
 		this.drawGrid();
 		
 		this.drawSelector(this.bkg);
@@ -565,6 +553,20 @@ Draw.prototype = {
 				ctx.stroke();
 			}
 		}
+	},
+	
+	drawPlayer : function() {
+		let ctx = $("map_player").getContext('2d');
+		let sx = OBJECT_SIZE * 4;
+		let sy = 0;
+		let sw = OBJECT_SIZE;
+		let sh = OBJECT_SIZE;
+		let dx = OBJECT_SIZE * this.player.x;
+		let dy = OBJECT_SIZE * this.player.y;
+		let dw = OBJECT_SIZE;
+		let dh = OBJECT_SIZE;
+		ctx.clearRect(dx, dy, dw, dh);
+		ctx.drawImage(this.img, sx, sy, sw, sh, dx, dy, dw, dh);
 	}
 }
 
@@ -675,8 +677,6 @@ function ViewModel(app) {
 		set: (id) => {
 			selectedBkgID_ = id;
 			this.typeSet(document.querySelector('*[data-parts="background_parts"]'), id);
-			this.app.draw.imageSet($("obj-image1"), this.app.bkg, id, 1);
-			this.app.draw.imageSet($("obj-image2"), this.app.bkg, id, 2);
 		},
 		get: () => {
 			return selectedBkgID_;
@@ -686,8 +686,6 @@ function ViewModel(app) {
 		set: (id) => {
 			selectedObjID_ = id;
 			this.typeSet(document.querySelector('*[data-parts="object_parts"]'), id);
-			this.app.draw.imageSet($("obj-image1"), this.app.obj, id, 1);
-			this.app.draw.imageSet($("obj-image2"), this.app.obj, id, 2);
 		},
 		get: () => {
 			return selectedObjID_;
