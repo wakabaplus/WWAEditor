@@ -18,8 +18,6 @@ const APP_MODE_BKG_INSERT = 0;
 const APP_MODE_OBJ_INSERT = 1;
 const APP_MODE_EDIT = 2;
 
-const PARTS_TYPE_OFFSET = 3;
-
 const DATA_CHECK = 0;
 const DATA_VERSION = 2;
 const DATA_ENERGYMAX = 32;
@@ -107,26 +105,6 @@ function decryptPass(pass) {
 }
 
 /**
- * オブジェクトのインスタンスが背景か物体かを判断し指定されたオブジェクトを返す
- * @param {Object} instance インスタンスを判断するオブジェクト
- * @param {Object} bkg 背景だった場合に返すオブジェクト
- * @param {Object} obj 物体だった場合に返すオブジェクト
- * @return {Object} bkg | obj
- */
-function determineVariable(instance, bkg, obj) {
-	let element;
-	if (instance.constructor === Bkg) {
-		element = bkg;
-	} else if (instance.constructor === Obj) {
-		element = obj;
-	} else {
-		console.error(instance.constructor);
-		throw new Error ("想定外なオブジェクト");
-	};
-	return element;
-}
-
-/**
  * マップデータ全体の情報を表す
  * @constructor
  */
@@ -144,6 +122,17 @@ function App() {
 	this.item = new Uint8Array(MAX_ITEM);
 	
 	this.message = [];
+	
+	this.element = {
+		type_select : {
+			bkg : null,
+			obj : null
+		},
+		setting_form : {
+			bkg : $("background-setting"),
+			obj : $("object-setting")
+		}
+	};
 }
 
 App.prototype = {
@@ -348,6 +337,7 @@ App.prototype = {
 			element.parentNode.removeChild(element);
 		}
 	},
+	
 	checkFile : function(map, str) {
 		let dataCheck = uint8to16(map, DATA_CHECK);
 		let dataVersion = map[2];
@@ -432,7 +422,7 @@ Draw.prototype = {
 		this.mapSize = mapSize;
 		this.img = new Image();
 		this.img.onload = () => {
-			this.draw();
+			this.drawAll();
 		};
 		Array.from(document.querySelectorAll("[data-main-canvas]")).forEach((element) => {
 			element.hidden = false;
@@ -445,38 +435,42 @@ Draw.prototype = {
 		};
 	},
 	
-	draw : function() {
-		this.drawParts(this.bkg);
-		this.drawParts(this.obj)
-		this.drawPlayer();
-		this.drawGrid();
+	drawAll : function() {
+		let bkg_parts_ctx = $("map_background").getContext('2d');
+		let obj_parts_ctx = $("map_object").getContext('2d');
+		this.drawMap(bkg_parts_ctx, this.bkg);
+		this.drawMap(obj_parts_ctx, this.obj)
 		
-		this.drawSelector(this.bkg);
-		this.drawSelector(this.obj);
+		let grid_ctx = $("map_grid").getContext('2d');
+		let player_ctx = $("map_player").getContext('2d')
+		this.drawPlayer(player_ctx);
+		this.drawGrid(grid_ctx);
+		
+		let bkg_selector_ctx = $("selector-bkg").getContext('2d');
+		let obj_selector_ctx = $("selector-obj").getContext('2d');
+		this.drawSelector(bkg_selector_ctx, this.bkg);
+		this.drawSelector(obj_selector_ctx, this.obj);
 	},
 	
-	drawParts : function(type) {
-		let element = determineVariable(type, $("map_background"), $("map_object"));
-		let ctx = element.getContext('2d');
-		ctx.clearRect(0, 0, element.width, element.height);
+	drawMap : function(ctx, data) {
+		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 		for (let x = 0; x < this.mapSize; x++) {
 			for (let y = 0; y < this.mapSize; y++) {
-				this.drawPart(element, type, x, y);
+				this.drawParts(ctx, data, x, y);
 			};
 		};
 	},
 	
-	drawPart : function(element, type, x, y) {
-		let ctx = element.getContext('2d');
-		let sx = type.getSX(type.mapData[y][x]);
-		let sy = type.getSY(type.mapData[y][x]);
+	drawParts : function(ctx, parts_data, x, y) {
+		let sx = parts_data.getSX(parts_data.mapData[y][x]);
+		let sy = parts_data.getSY(parts_data.mapData[y][x]);
 		let sw = OBJECT_SIZE;
 		let sh = OBJECT_SIZE;
 		let dx = x * OBJECT_SIZE;
 		let dy = y * OBJECT_SIZE;
 		let dw = OBJECT_SIZE;
 		let dh = OBJECT_SIZE;
-		if (type.mapData[y][x] === 0) {
+		if (parts_data.mapData[y][x] === 0) {
 			/* パーツ0ならば */
 			ctx.clearRect(dx, dy, dw, dh);
 		} else {
@@ -484,19 +478,17 @@ Draw.prototype = {
 		};
 	},
 	
-	drawSelector : function(type) {
+	drawSelector : function(ctx, type) {
 		let sx, sy, sw, sh, dx, dy, dw, dh;
-		let element = determineVariable(type, $("selector-bkg"), $("selector-obj"));
-		let ctx = element.getContext('2d');
-		element.width = OBJECT_SIZE * 10;
-		element.height = MAX_PARTS * OBJECT_SIZE / element.width * OBJECT_SIZE;
+		ctx.canvas.width = OBJECT_SIZE * 10;
+		ctx.canvas.height = MAX_PARTS * OBJECT_SIZE / ctx.canvas.width * OBJECT_SIZE;
 		for(let id = 0; id < type.attribute.length; id++) {
 			sx = type.getSX(id);
 			sy = type.getSY(id);
 			sw = OBJECT_SIZE;
 			sh = OBJECT_SIZE;
-			dx = Math.floor(id * OBJECT_SIZE % element.width);
-			dy = Math.floor(id * OBJECT_SIZE / element.width) * OBJECT_SIZE;
+			dx = Math.floor(id * OBJECT_SIZE % ctx.canvas.width);
+			dy = Math.floor(id * OBJECT_SIZE / ctx.canvas.width) * OBJECT_SIZE;
 			dw = OBJECT_SIZE;
 			dh = OBJECT_SIZE;
 			ctx.drawImage(this.img, sx, sy, sw, sh, dx, dy, dw, dh);
@@ -524,8 +516,7 @@ Draw.prototype = {
 		this.imageSet($("bkg-image"), this.bkg, id.bkg);
 	},
 	
-	drawGrid : function() {
-		let ctx = $("map_grid").getContext('2d');
+	drawGrid : function(ctx) {
 		for (let x = 0; x < this.mapSize; x++) {
 			for (let y = 0; y < this.mapSize; y++) {
 				ctx.strokeStyle = "blue";
@@ -555,8 +546,7 @@ Draw.prototype = {
 		}
 	},
 	
-	drawPlayer : function() {
-		let ctx = $("map_player").getContext('2d');
+	drawPlayer : function(ctx) {
 		let sx = OBJECT_SIZE * 4;
 		let sy = 0;
 		let sw = OBJECT_SIZE;
@@ -655,8 +645,6 @@ Obj.prototype.constructor = Obj;
  */
 function ViewModel(app) {
 	let option_xhr = new XMLHttpRequest();
-	let selectedBkgID_ = 0;
-	let selectedObjID_ = 0;
 	
 	this.app = app;
 	this.mode = APP_MODE_BKG_INSERT;
@@ -672,30 +660,22 @@ function ViewModel(app) {
 		bkg : 0,
 		obj : 0
 	};
-	
-	Object.defineProperty(this.selectedID, "bkg", {
-		set: (id) => {
-			selectedBkgID_ = id;
-			this.typeSet(document.querySelector('*[data-parts="background_parts"]'), id);
+	this.ctx = {
+		map : {
+			bkg : $("map_background").getContext('2d'),
+			obj : $("map_object").getContext('2d')
 		},
-		get: () => {
-			return selectedBkgID_;
+		selector : {
+			bkg : $("selector-bkg").getContext('2d'),
+			obj : $("selector-obj").getContext('2d')
 		}
-	});
-	Object.defineProperty(this.selectedID, "obj", {
-		set: (id) => {
-			selectedObjID_ = id;
-			this.typeSet(document.querySelector('*[data-parts="object_parts"]'), id);
-		},
-		get: () => {
-			return selectedObjID_;
-		}
-	});
+	};
 	
 	$("new-file").addEventListener("click", this.newFile.bind(this), false);
 	$("open-file").addEventListener("click", this.openFile.bind(this), false);
 	$("save-button").addEventListener("click", this.saveFile.bind(this), false);
 	$("map_grid").addEventListener("click", this.partsClicked.bind(this), false);
+	$("map_grid").addEventListener("contextmenu", this.partsRightClicked.bind(this), false);
 	$("map_grid").addEventListener("mousemove", this.showCoords.bind(this), false);
 	$("selector-bkg").addEventListener("click", this.selectorClicked.bind(this), false);
 	$("selector-obj").addEventListener("click", this.selectorClicked.bind(this), false);
@@ -721,21 +701,22 @@ function ViewModel(app) {
 
 ViewModel.prototype = {
 	addPartsTypeOption : function(json_src) {
-		for (let parts_group in json_src) {
-			const parts_element = document.querySelector('*[data-parts="' + parts_group + '"]');
-			if (parts_element) {
-				for (let parts_name in json_src[parts_group]) {
-					const option = document.createElement("option");
-					option.textContent = parts_name;
-					
-					option.value = json_src[parts_group][parts_name]["data-subscript"];
-					option.dataset.attribute = JSON.stringify(json_src[parts_group][parts_name]);
-					parts_element.appendChild(option);
-				}
-				parts_element.addEventListener("change", this.createPartSettingWindow.bind(this), false);
-				parts_element.dataset.variable = JSON.stringify(json_src.variable);
+		["bkg", "obj"].forEach((parts_group) => {
+			this.app.element.type_select[parts_group] = document.createElement("select");
+			this.app.element.type_select[parts_group].dataset.group = parts_group;
+			this.app.element.type_select[parts_group].dataset.subscript = 3;
+			this.app.element.setting_form[parts_group].insertBefore(this.app.element.type_select[parts_group], this.app.element.type_select[parts_group].nextSibling);
+			for (let parts_name in json_src[parts_group]) {
+				const option = document.createElement("option");
+				option.textContent = parts_name;
+				
+				option.value = json_src[parts_group][parts_name]["data-subscript"];
+				option.dataset.attribute = JSON.stringify(json_src[parts_group][parts_name]);
+				this.app.element.type_select[parts_group].appendChild(option);
 			}
-		}
+			this.app.element.type_select[parts_group].addEventListener("change", this.createPartSettingWindow.bind(this), false);
+			this.app.element.type_select[parts_group].dataset.variable = JSON.stringify(json_src.variable);
+		});
 	},
 	
 	/**
@@ -748,64 +729,53 @@ ViewModel.prototype = {
 		const attribute_form = document.createElement(tag_name);
 		Object.keys(attributeAndChildNode).forEach((element) => {
 			let element_attribute = attributeAndChildNode[element];
-			if (typeof element_attribute === "object") {
-				/* 子ノードを追加 */
-				if (Array.isArray(element_attribute)) {
-					element_attribute.forEach((attribute) => {
-						let attribute_childForm = this.createForm(element, attribute);
-						attribute_childForm.textContent = attribute["data-name"] || "";
-						attribute_form.appendChild(attribute_childForm);
-					});
-				} else {
-					let attribute_childForm = this.createForm(element, element_attribute);
-					attribute_childForm.textContent = element_attribute["data-name"] || "";
+			if(Array.isArray(element_attribute)) {
+				/* 配列は同じタグが連続するとみなす */
+				element_attribute.forEach((attribute) => {
+					let attribute_childForm = this.createForm(element, attribute);
+					attribute_childForm.textContent = attribute["data-name"] || "";
 					attribute_form.appendChild(attribute_childForm);
-				}
+				});
+			} else if (typeof element_attribute === "object") {
+				let attribute_childForm = this.createForm(tag_name, element_attribute);
+				attribute_form.appendChild(attribute_childForm);
 			} else {
 				/* 属性を追加 */
 				attribute_form.setAttribute(element, element_attribute);
-			}
+			};
 		});
 		return attribute_form;
-	},
-
-	/**
-	* 親ノードから指定したタグ名を持つ子ノードを削除する
-	* @param {HTMLElement} parentNode 親ノード
-	* @param {String} tagName タグ名
-	*/
-	removeChildsByTagName : function(parentNode, tagName) {
-		Array.from(parentNode.children).forEach((element, index, array) => {
-			if (element.tagName === tagName) {
-				parentNode.removeChild(element);
-			}
-		});
 	},
 	
 	createPartSettingWindow : function(e) {
 		const target = e.target || e;
-		const selected_option = target.options[target.selectedIndex];
 		const variable = JSON.parse(target.dataset.variable);
-		this.removeChildsByTagName(target.parentNode, "LABEL");
-		for (let attribute of JSON.parse(selected_option.dataset.attribute)["attribute"]) {
+		const formData = JSON.parse(target.options[target.selectedIndex].dataset.attribute).formData;
+		const group = target.dataset.group;
+		const id = this.selectedID[group];
+		const element = this.app.element.setting_form[group];
+		while (element.lastChild !== this.app.element.type_select[group]) {
+		    element.removeChild(element.lastChild);
+		};
+		
+		for (let alias of formData) {
 			const attribute_name = document.createElement('label');
-			attribute_name.textContent = attribute;
-			for (let tag_name in variable[attribute]) {
-				let attribute_form = this.createForm(tag_name, variable[attribute][tag_name]);
-				let group = target.dataset.group;
-				let id = this.selectedID[group];
-				let value = this.app[group]["attribute"][id][attribute_form.dataset.subscript];
-				if (attribute_form.dataset.string) {
-					attribute_form.dataset.messageid = value;
-					attribute_form.value = this.app.message[value];
-				} else {
-					attribute_form.value = value;
-				}
-				attribute_name.dataset.group = group;
+			element.appendChild(attribute_name);
+			attribute_name.textContent = alias;
+			Object.keys(variable[alias]).forEach((tag_name) => {
+				let attribute_form = this.createForm(tag_name, variable[alias][tag_name]);
 				attribute_name.appendChild(attribute_form);
-			}
-			target.parentNode.insertBefore(attribute_name, attribute_name.nextSibling);
-		}
+			});
+			Array.from(attribute_name.querySelectorAll("[data-subscript]")).forEach((element) => {
+				let value = this.app[group]["attribute"][id][element.dataset.subscript];
+				if (element.dataset.string) {
+					element.dataset.messageid = value;
+					element.value = this.app.message[value];
+				} else {
+					element.value = value;
+				};
+			});
+		};
 	},
 	
 	showCoords : function(e) {
@@ -831,11 +801,13 @@ ViewModel.prototype = {
 	},
 	
 	imageSelectorClicked : function(e) {
+		let group = e.target.dataset.group;
 		let x = Math.floor(e.layerX / OBJECT_SIZE) * OBJECT_SIZE;
 		let y = Math.floor(e.layerY / OBJECT_SIZE) * OBJECT_SIZE;
-		this.app[e.target.dataset.group]["setSXSY"](this.selectedID[e.target.dataset.group], parseInt(e.target.dataset.frame), x, y);
-		this.app.draw.drawParts(this.app[e.target.dataset.group]);
-		this.app.draw.drawSelector(this.app[e.target.dataset.group]);
+		
+		this.app[group].setSXSY(this.selectedID[group], parseInt(e.target.dataset.frame), x, y);
+		this.app.draw.drawMap(this.ctx.map[group], this.app[group]);
+		this.app.draw.drawSelector(this.ctx.selector[group], this.app[group]);
 		this.app.draw.drawSelectedParts(this.selectedID);
 		document.body.removeChild($("image-window"))
 	},
@@ -845,8 +817,8 @@ ViewModel.prototype = {
 	},
 	
 	typeSet : function(element, id) {
-		element.hidden = (id === 0);
-		element.value = this.app[element.dataset.group]["attribute"][id][PARTS_TYPE_OFFSET];
+		element.parentNode.hidden = (id === 0);
+		element.value = this.app[element.dataset.group]["attribute"][id][3];
 		this.createPartSettingWindow(element);
 	},
 	
@@ -904,20 +876,30 @@ ViewModel.prototype = {
 		};
 	},
 	
+	partsRightClicked : function(e) {
+		e.preventDefault();
+		this.writePartsData(this.app.bkg.attribute[this.selectedID.bkg], "bkg");
+		this.writePartsData(this.app.obj.attribute[this.selectedID.obj], "obj");
+		this.editPart(e);
+	},
+	
 	insertPart : function(e, element) {
 		let x = Math.floor(e.layerX / OBJECT_SIZE);
 		let y = Math.floor(e.layerY / OBJECT_SIZE);
 		let group = element.dataset.group;
+		let ctx = element.getContext('2d');
 		this.app[group]["mapData"][y][x] = this.selectedID[group];
-		this.app.draw.drawPart(element, this.app[group], x, y);
+		this.app.draw.drawParts(ctx, this.app[group], x, y);
 	},
 	
 	editPart : function(e) {
 		let x = Math.floor(e.layerX / OBJECT_SIZE);
 		let y = Math.floor(e.layerY / OBJECT_SIZE);
 		
-		this.selectedID.bkg = this.app.bkg.mapData[y][x];
-		this.selectedID.obj = this.app.obj.mapData[y][x];
+		["bkg", "obj"].forEach((group) => {
+			this.selectedID[group] = this.app[group].mapData[y][x];
+			this.typeSet(this.app.element.type_select[group], this.selectedID[group]);
+		});
 		this.app.draw.drawSelectedParts(this.selectedID);
 	},
 	
@@ -931,28 +913,26 @@ ViewModel.prototype = {
 		this.writePartsData(this.app.bkg.attribute[this.selectedID.bkg], "bkg");
 		this.writePartsData(this.app.obj.attribute[this.selectedID.obj], "obj");
 		this.selectedID[type] = 10 * y + x;
+		this.typeSet(this.app.element.type_select[type], this.selectedID[type]);
 		this.app.draw.drawSelectedParts(this.selectedID);
 	},
 	
 	writePartsData : function(attribute, group) {
-		Array.from(document.querySelectorAll("[data-parts]")).forEach((element) => {
-			if (element.dataset.group === group) {
-				attribute[PARTS_TYPE_OFFSET] = element.value;
-			};
-		});
-		Array.from(document.querySelectorAll("[data-subscript]")).forEach((element) => {
-			if (element.parentNode.dataset.group === group) {
-				if (element.dataset.string) {
-					if (element.dataset.messageid === "0" && element.value !== "") {
-						/* 何もメッセージが入力されていなかったパーツにメッセージが入力された場合 */
-						this.app.message.push(element.value);
-						element.dataset.messageid = this.app.message.length - 1;
-					}
-					this.app.message[element.dataset.messageid] = element.value;
-					attribute[element.dataset.subscript] = element.dataset.messageid;
-				} else {
-					attribute[element.dataset.subscript] = element.value;
-				};
+		if (this.selectedID[group] === 0) {
+			return;
+		};
+		
+		Array.from(this.app.element.setting_form[group]).forEach((element) => {
+			if (element.dataset.string) {
+				if (element.dataset.messageid === "0" && element.value !== "") {
+					/* 何もメッセージが入力されていなかったパーツにメッセージが入力された場合 */
+					this.app.message.push(element.value);
+					element.dataset.messageid = this.app.message.length - 1;
+				}
+				this.app.message[element.dataset.messageid] = element.value;
+				attribute[element.dataset.subscript] = element.dataset.messageid;
+			} else {
+				attribute[element.dataset.subscript] = element.value;
 			};
 		});
 	}

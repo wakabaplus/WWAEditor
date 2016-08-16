@@ -5,18 +5,13 @@ a {
 	color: inherit;
 }
 
-article {
-	width: 75%;
-	margin: auto;
-}
-
 nav {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	width: 100%;
 }
-nav ul {
+nav ul, .popup ul {
 	margin: 0;
 	padding: 0;
 }
@@ -26,28 +21,51 @@ nav li {
 	vertical-align: middle;
 }
 
+.HLayout {
+	display: flex;
+}
+
+.HLayout > .pane {
+	background: black;
+	color: white;
+	border: 1px solid;
+	display: block;
+	overflow: auto;
+	resize: both;
+	margin: 5px;
+	width: 75vw;
+}
+
+.VLayout {
+	display: flex;
+	flex-direction: column;
+}
+
+.VLayout > .pane {
+	background: black;
+	border: 1px solid;
+	display: block;
+	overflow: auto;
+	resize: both;
+	margin: 5px;
+	height: 240px;
+	width: 25vw;
+}
+
+.layer-container {
+	display: flex;
+	flex-direction: column;
+	position: relative;
+	height: 600px;
+}
+
 .layer {
 	position: absolute;
 	top: 0;
 	left: 0;
 }
 
-.image img {
-	position: absolute;
-}
-
-.subWindow {
-	position: relative;
-}
-
 .popup {
-	background: white;
-	box-shadow: 0px 0px 10px black;
-	position: absolute;
-	z-index: 1;
-}
-
-.window_ {
 	background: white;
 	box-shadow: 0px 0px 10px black;
 	border-radius: 5px;
@@ -58,55 +76,18 @@ nav li {
 	overflow: auto;
 	z-index: 1;
 }
-.window_ ul {
-	margin: 0;
-	padding: 0;
-}
-.window_ li {
+
+.popup li {
 	display: inline-block;
 	width: 100%;
 }
-.window_ label {
+.popup label {
 	display: inline-block;
 	width: 120px;
 }
-.window_ input[type="text"] {
-	width: 300px;
-}
-.system-message label {
-	display: block;
-	width: auto;
-}
-.system-message input[type="text"] {
-	width: 400px;
-}
-.window {
-	display: flex;
-}
 
-.window > .subWindow {
-	background: black;
-	color: white;
-	border: 1px solid;
-	display: block;
-	overflow: auto;
-	resize: both;
-	margin: 5px;
-	width: 75%;
-	height: 600px;
-}
-
-.sidebar > .subWindow {
-	background: black;
-	border: 1px solid;
-	display: block;
-	overflow: auto;
-	resize: both;
-	margin: 5px;
-}
-
-[data-hidden=true] {
-	display: none;
+.image img {
+	position: absolute;
 }
 
 header {
@@ -115,49 +96,21 @@ header {
 	padding: 0.5ex;
 }
 
-header > h2 {
-	margin: 0;
-	font-size: 100%;
-}
-
-.sidebar {
-	display: flex;
-	flex-direction: column;
-	width: 25%;
-}
-
-.sidebar > div {
-	height: 240px;
-}
-
-#chara_image_selector {
-	display: block;
-	width: 40px;
-	height: 40px;
-	overflow: hidden;
-}
-#parts_frame1 {
-	transform-origin: left top;
-	transform: translate(-80px, -0px);
-}
-
 fieldset {
 	font-size: small;
-}
-
-.type {
-	resize: both;
-	width: 100%;
-}
-
-.appear-parts {
-	text-align: center;
+	overflow: auto;
 }
 
 label {
 	display: block;
 }
 
-input[type="number"] {
-	width: 4em;
+input:not([type=button]):not([type=file]):not([type=url]) {
+	width: 3em;
 }
+
+form > * {
+	box-sizing: border-box;
+	width: 100%;
+}
+

@@ -1,121 +1,120 @@
 {
-	"background_parts": {
+	"bkg": {
 		"道": {
 			"data-subscript" : 0,
-			"attribute" : [
+			"formData" : [
 				"待ち時間", "反応するアイテム番号", "サウンド番号", "表示メッセージ", "指定位置にパーツを出現"
 			]
 		},
 		"壁": {
 			"data-subscript" : 1,
-			"attribute" : [
+			"formData" : [
 				"表示メッセージ", "指定位置にパーツを出現"
 			]
 		},
 		"ジャンプゲート": {
 			"data-subscript" : 2,
-			"attribute" : [
+			"formData" : [
 				"ジャンプ先 X座標", "ジャンプ先 Y座標", "サウンド番号", "指定位置にパーツを出現"
 			]
 		},
 		"URLゲート": {
 			"data-subscript" : 4,
-			"attribute" : [
+			"formData" : [
 				"リンク先のURLアドレス", "URL TARGET"
 			]
 		}
 	},
-	"object_parts": {
+	"obj": {
 		"通常物体": {
 			"data-subscript" : 0,
-			"attribute" : [
+			"formData" : [
 				"通行区分", "動作属性"
 			]
 		},
 		"メッセージ": {
 			"data-subscript" : 1,
-			"attribute" : [
+			"formData" : [
 				"サウンド番号", "動作属性", "待ち時間", "表示メッセージ", "指定位置にパーツを出現"
 			]
 		},
 		"モンスター": {
 			"data-subscript" : 6,
-			"attribute" : [
+			"formData" : [
 				"生命力", "攻撃力", "防御力", "所持金", "モンスター所持アイテムの物体番号", "サウンド番号", "動作属性", "戦闘後表示メッセージ", "指定位置にパーツを出現"
 			]
 		},
 		"アイテム": {
 			"data-subscript" : 4,
-			"attribute" : [
+			"formData" : [
 				"攻撃力", "防御力", "アイテムボックスへの格納位置", "サウンド番号", "使用属性", "動作属性", "アイテム取得後表示メッセージ", "指定位置にパーツを出現"
 			]
 		},
 		"扉": {
 			"data-subscript" : 5,
-			"attribute" : [
-				"扉の種類", "対応するアイテム(鍵)の物体番号", {
-					"通行区分": {
-						"data-subscript": 15,
-						"select": {
-							"option": [
-								{
-									"data-name": "通り抜け不可",
-									"value": 0
-								},
-								{
-									"data-name": "通り抜け可",
-									"value": 1
-								}
-							]
-						}
-					}
-				}, "サウンド番号", "動作属性", "扉開放後表示メッセージ", "指定位置にパーツを出現"
+			"formData" : [
+				"扉の種類", "対応するアイテム(鍵)の物体番号", "通行区分(扉)", "サウンド番号", "動作属性", "扉開放後表示メッセージ", "指定位置にパーツを出現"
 			]
 		},
 		"ステータス変化": {
 			"data-subscript" : 3,
-			"attribute" : [
+			"formData" : [
 				"生命力", "攻撃力", "防御力", "所持金", "サウンド番号", "動作属性", "アイテム取得後表示メッセージ", "指定位置にパーツを出現"
 			]
 		},
 		"物を売る": {
 			"data-subscript" : 14,
-			"attribute" : [
+			"formData" : [
 				"販売金額", "売るアイテムの物体番号", "生命力", "攻撃力", "防御力", "サウンド番号", "動作属性", "表示メッセージ", "指定位置にパーツを出現"
 			]
 		},
 		"物を買う": {
 			"data-subscript" : 15,
-			"attribute" : [
+			"formData" : [
 				"買い取り金額", "買うアイテムの物体番号", "サウンド番号", "動作属性", "表示メッセージ", "指定位置にパーツを出現"
 			]
 		},
 		"URLゲート": {
 			"data-subscript" : 2,
-			"attribute" : [
+			"formData" : [
 				"リンク先のURLアドレス", "URL TARGET"
 			]
 		},
 		"スコア表示": {
 			"data-subscript" : 11,
-			"attribute" : [
+			"formData" : [
 				"生命力×", "攻撃力×", "防御力×", "所持金×", "サウンド番号", "表示メッセージ"
 			]
 		},
 		"ランダム選択": {
-			"data-subscript" : 16
+			"data-subscript" : 16,
+			"formData" : [
+				"選択するパーツの物体番号"
+			]
 		},
 		"二者択一": {
 			"data-subscript" : 17,
-			"attribute" : [
-				"サウンド番号", "動作属性", "表示メッセージ", "指定位置にパーツを出現（二者択一）"
+			"formData" : [
+				"サウンド番号", "動作属性", "表示メッセージ", "指定位置にパーツを出現"
 			]
 		},
 		"ジャンプゲート": {
 			"data-subscript" : 18,
-			"attribute" : [
+			"formData" : [
 				"ジャンプ先 X座標", "ジャンプ先 Y座標", "サウンド番号", "指定位置にパーツを出現"
 			]
+		}
+	},
+	"map-config": {
+		"ワールド名" : {
+			"input" : {
+				"type": "text"
+			}
+		},
+		"画像ファイル" : {
+			"input" : {
+				"type": "text"
+			}
 		}
 	},
 	"variable": {
@@ -167,6 +166,24 @@
 				"cols": 60
 			}
 		},
+		"扉開放後表示メッセージ": {
+			"textarea": {
+				"data-string": true,
+				"data-subscript": 5,
+				"maxlength": 1510,
+				"rows": 8,
+				"cols": 60
+			}
+		},
+		"アイテム取得後表示メッセージ": {
+			"textarea": {
+				"data-string": true,
+				"data-subscript": 5,
+				"maxlength": 1510,
+				"rows": 8,
+				"cols": 60
+			}
+		},
 		"生命力": {
 			"input": {
 				"data-subscript": 10,
@@ -201,6 +218,13 @@
 			"input": {
 				"data-subscript": 13,
 				"type": "number"
+			}
+		},
+		"反応するアイテム番号": {
+			"input": {
+				"data-subscript": 14,
+				"type": "number",
+				"max": 3999
 			}
 		},
 		"モンスター所持アイテムの物体番号": {
@@ -238,6 +262,45 @@
 				"max": 1000
 			}
 		},
+		"リンク先のURLアドレス": {
+			"input": {
+				"data-string": true,
+				"data-subscript": 5,
+				"type": "url"
+			}
+		},
+		"URL TARGET": {
+			"input": {
+				"data-string": true,
+				"data-subscript": 5,
+				"data-offset": 2,
+				"type": "text"
+			}
+		},
+		"生命力×": {
+			"input": {
+				"data-subscript": 10,
+				"type": "number"
+			}
+		},
+		"攻撃力×": {
+			"input": {
+				"data-subscript": 11,
+				"type": "number"
+			}
+		},
+		"防御力×": {
+			"input": {
+				"data-subscript": 12,
+				"type": "number"
+			}
+		},
+		"所持金×": {
+			"input": {
+				"data-subscript": 13,
+				"type": "number"
+			}
+		},
 		"アイテムボックスへの格納位置": {
 			"input": {
 				"data-subscript": 15,
@@ -268,11 +331,359 @@
 				]
 			}
 		},
+		"使用属性": {
+			"select": {
+				"data-subscript": 4,
+				"option" : [
+					{
+						"data-name": "通常",
+						"value": 0
+					},
+					{
+						"data-name": "クリックで使用可",
+						"value": 1
+					},
+					{
+						"data-name": "使用しても無くならない",
+						"value": 2
+					}
+				]
+			}
+		},
 		"サウンド番号": {
 			"input": {
 				"data-subscript": 19,
 				"type": "number"
 			}
+		},
+		"ジャンプ先 X座標": {
+			"input": {
+				"data-subscript": 16,
+				"type": "text",
+				"size": "2",
+				"data-relativeoffset": 10000
+			}
+		},
+		"ジャンプ先 Y座標": {
+			"input": {
+				"data-subscript": 17,
+				"type": "text",
+				"size": "2",
+				"data-relativeoffset": 10000
+			}
+		},
+		"通行区分(扉)": {
+			"select": {
+				"data-subscript": 15,
+				"option": [
+					{
+						"data-name": "通り抜け不可",
+						"value": 0
+					},
+					{
+						"data-name": "通り抜け可",
+						"value": 1
+					}
+				]
+			}
+		},
+		"選択するパーツの物体番号": {
+			"div": [
+				{
+					"class": "HLayout",
+					"input": [
+						{
+							"data-subscript": 10,
+							"type": "number"
+						},
+						{
+							"data-subscript": 11,
+							"type": "number"
+						},
+						{
+							"data-subscript": 12,
+							"type": "number"
+						},
+						{
+							"data-subscript": 13,
+							"type": "number"
+						},
+						{
+							"data-subscript": 14,
+							"type": "number"
+						},
+						{
+							"data-subscript": 15,
+							"type": "number"
+						},
+						{
+							"data-subscript": 16,
+							"type": "number"
+						},
+						{
+							"data-subscript": 17,
+							"type": "number"
+						},
+						{
+							"data-subscript": 18,
+							"type": "number"
+						},
+						{
+							"data-subscript": 19,
+							"type": "number"
+						}
+					]
+				}
+			]
+		},
+		"指定位置にパーツを出現": {
+			"div": [
+				{
+					"class": "HLayout",
+					"span": [
+						{
+							"data-name": "番号",
+							"class": "label"
+						}
+					],
+					"input": [
+						{
+							"data-subscript": 20,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 24,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 28,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 32,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 36,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 40,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 44,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 48,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 52,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 56,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						}
+					]
+				},
+				{
+					"class": "HLayout",
+					"data-relativeoffset": true,
+					"span": [
+						{
+							"data-name": "X座標",
+							"class": "label"
+						}
+					],
+					"input": [
+						{
+							"data-subscript": 21,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 25,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 29,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 33,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 37,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 41,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 45,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 49,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 53,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 57,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						}
+					]
+				},
+				{
+					"class": "HLayout",
+					"data-relativeoffset": true,
+					"span": [
+						{
+							"data-name": "Y座標",
+							"class": "label"
+						}
+					],
+					"input": [
+						{
+							"data-subscript": 22,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 26,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 30,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 34,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 38,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 42,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 46,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 50,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 54,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						},
+						{
+							"data-subscript": 58,
+							"type": "text",
+							"size": "2",
+							"data-relativeoffset": 10000,
+							"data-pmark": true
+						}
+					]
+				}
+			]  
 		}
 	}
 }
