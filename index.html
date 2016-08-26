@@ -15,7 +15,8 @@
 		</ul>
 		<ul>
 			<li>(<span id="coord-x">--</span>, <span id="coord-y">--</span>)</li>
-			<li><input type="button" data-window="map-config" value="マップの設定"></li>
+			<li><input type="button" id="settings-button" data-window="settings-window" value="マップの設定"></li>
+			<li><input type="button" id="system-button" data-window="system-window" value="システムメッセージの編集"></li>
 			<li>
 				<select id="editor-mode" size="3">
 					<option value="0" selected>背景パーツ挿入</option>
@@ -32,7 +33,7 @@
 		<ul><li>
 			<label for="new-img">画像ファイル</label><input type="file" id="new-img">
 		</li></ul>
-		<input type="button" id="new-file" value="OK">
+		<input type="button" id="new-file" data-window="new-window" value="OK">
 	</fieldset>
 </div>
 <div class="popup" id="open-window" hidden>
@@ -43,15 +44,27 @@
 		</li><li>
 			<label for="open-img">画像ファイル</label><input type="file" id="open-img">
 		</li></ul>
-		<input type="button" id="open-file" value="OK">
+		<input type="button" id="open-file" data-window="open-window" value="OK">
 	</fieldset>
 </div>
-<div class="popup" id="map-config" hidden>
+<div class="popup" id="settings-window" hidden>
 	<fieldset>
 		<legend>マップの設定</legend>
-		
-		<input type="button" id="open-file" value="OK">
+		<form id="map-settings"></form>
+		<p>※パーツ最大数は4000から変更することはできません。</p>
 	</fieldset>
+	<fieldset>
+		<legend>プレイヤーの設定</legend>
+		<form id="player-settings"></form>
+		<input type="button" id="settings-ok-button" data-window="settings-window" value="OK">
+	</fieldset>
+</div>
+<div class="popup" id="system-window" hidden>
+	<fieldset>
+		<legend>システムメッセージの編集</legend>
+		<form id="system-settings"></form>
+	</fieldset>
+	<input type="button" id="system-ok-button" data-window="system-window" value="OK">
 </div>
 <div class="HLayout">
 
@@ -80,7 +93,7 @@
 		<div class="image" data-group="bkg">
 			<canvas id="bkg-image" width="40" height="40" data-group="bkg" data-frame="1" hidden></canvas>
 		</div>
-		<form id="background-setting" data-group="bkg"></form>
+		<form id="background-settings" class="setting" data-group="bkg"></form>
 	</fieldset>
 	<fieldset>
 		<legend>物体パーツの設定</legend>
@@ -88,7 +101,7 @@
 			<canvas id="obj-image1" width="40" height="40" data-group="obj" data-frame="1" hidden></canvas>
 			<canvas id="obj-image2" width="40" height="40" data-group="obj" data-frame="2" hidden></canvas>
 		</div>
-		<form id="object-setting" data-group="obj"></form>
+		<form id="object-settings" class="setting" data-group="obj"></form>
 	</fieldset>
 </div>
 

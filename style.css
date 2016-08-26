@@ -71,19 +71,21 @@ nav li {
 	border-radius: 5px;
 	position: absolute;
 	padding: 1em;
-	width: 600px;
-	height: 400px;
+	width: 45vw;
+	height: 40vh;
+	resize: both;
 	overflow: auto;
 	z-index: 1;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	margin: auto;
 }
 
 .popup li {
 	display: inline-block;
 	width: 100%;
-}
-.popup label {
-	display: inline-block;
-	width: 120px;
 }
 
 .image img {
@@ -105,12 +107,18 @@ label {
 	display: block;
 }
 
-input:not([type=button]):not([type=file]):not([type=url]) {
-	width: 3em;
-}
-
 form > * {
 	box-sizing: border-box;
 	width: 100%;
 }
 
+#modal-background {
+	position: absolute;
+	width: 100vw;
+	height: 100vh;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	margin: auto;
+}

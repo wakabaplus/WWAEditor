@@ -1,9 +1,6 @@
 (function () {
 'use strict';
 
-const DIALOG_WIDTH = 600;
-const DIALOG_HEIGHT = 400;
-
 const OBJECT_SIZE = 40;
 
 const MAX_ITEM = 12;
@@ -104,6 +101,32 @@ function decryptPass(pass) {
 	return (parseInt(pass) - 412660) / 170;
 }
 
+function toggleWindow(e, callback) {
+	let data_window = $(e.target.dataset.window);
+	data_window.hidden = !data_window.hidden;
+	callback(e);
+};
+
+function showWindow(e) {
+	toggleWindow(e, (e) => {
+		if ($("modal-background")) {
+			document.body.removeChild($("modal-background"));
+		} else {
+			let modal = document.createElement("div");
+			modal.id="modal-background";
+			modal.dataset.window = e.target.dataset.window;
+			modal.addEventListener("click", closeModalWindow, false);
+			document.body.appendChild(modal);
+		}
+	});
+}
+
+function closeModalWindow(e) {
+	toggleWindow(e, (e) => {
+		document.body.removeChild(e.target);
+	});
+}
+
 /**
  * マップデータ全体の情報を表す
  * @constructor
@@ -118,7 +141,7 @@ function App() {
 	this.imgFileName = null;
 	this.worldName = null;
 	this.pass = null;
-	this.mapSize = 101;
+	this.mapSize = null;
 	this.item = new Uint8Array(MAX_ITEM);
 	
 	this.message = [];
@@ -129,8 +152,11 @@ function App() {
 			obj : null
 		},
 		setting_form : {
-			bkg : $("background-setting"),
-			obj : $("object-setting")
+			system : $("system-settings"),
+			map : $("map-settings"),
+			player : $("player-settings"),
+			bkg : $("background-settings"),
+			obj : $("object-settings")
 		}
 	};
 }
@@ -148,7 +174,7 @@ App.prototype = {
 		this.worldName = "";
 		this.pass = "";
 		this.sysMsg = new Array(20).fill("");
-		this.message[0] = "";
+		this.message = Array.from({length: 10}, () => "");
 
 		this.draw.init(this.bkg, this.obj, this.player, this.mapSize, imgFile);
 	},
@@ -187,8 +213,8 @@ App.prototype = {
 				this.bkg.mapData[x][y] = uint8to16(map, mapByte);
 				this.obj.mapData[x][y] = uint8to16(map, objByte);
 				mapByte += 2;
-			}
-		}
+			};
+		};
 		mapByte = objByte + 2;
 		
 		for(let id = 0; id < numBkg; id++) {
@@ -400,17 +426,7 @@ function Draw(bkg, obj, mapSize) {
 	this.bkg = bkg;
 	this.obj = obj;
 	this.mapSize = mapSize;
-	this.img = new Image();
-	
-	Array.from(document.querySelectorAll("[data-main-canvas]")).forEach((element) => {
-		element.hidden = false;
-		element.width = OBJECT_SIZE * this.mapSize;
-		element.height = OBJECT_SIZE * this.mapSize;
-	});
-	
-	this.img.onload = () => {
-		this.draw.draw();
-	};
+	this.img = null;
 }
 
 Draw.prototype = {
@@ -555,7 +571,7 @@ Draw.prototype = {
 		let dy = OBJECT_SIZE * this.player.y;
 		let dw = OBJECT_SIZE;
 		let dh = OBJECT_SIZE;
-		ctx.clearRect(dx, dy, dw, dh);
+		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 		ctx.drawImage(this.img, sx, sy, sw, sh, dx, dy, dw, dh);
 	}
 }
@@ -579,7 +595,7 @@ function Parts() {
 
 Parts.prototype = {
 	newFile : function(mapSize) {
-		this.mapData = new Array(mapSize).fill(new Array(mapSize).fill(0));
+		this.mapData = Array.from({length: mapSize}, () => Array.from({length: mapSize}, () => 0));
 	},
 	getSX : function(id, frame = 1) {
 		let image = frame === 1 ? DATA_PROP_X : DATA_PROP_X2;
@@ -647,7 +663,9 @@ function ViewModel(app) {
 	let option_xhr = new XMLHttpRequest();
 	
 	this.app = app;
-	this.mode = APP_MODE_BKG_INSERT;
+	this.mode = null;
+	this.variable = null;
+	this.setting_formdata = null;
 	Object.defineProperty(this, "mode", {
 		set: (mode) => {
 			$("editor-mode").value = mode;
@@ -661,6 +679,7 @@ function ViewModel(app) {
 		obj : 0
 	};
 	this.ctx = {
+		player : $("map_player").getContext('2d'),
 		map : {
 			bkg : $("map_background").getContext('2d'),
 			obj : $("map_object").getContext('2d')
@@ -674,6 +693,10 @@ function ViewModel(app) {
 	$("new-file").addEventListener("click", this.newFile.bind(this), false);
 	$("open-file").addEventListener("click", this.openFile.bind(this), false);
 	$("save-button").addEventListener("click", this.saveFile.bind(this), false);
+	$("settings-button").addEventListener("click", this.settingsClicked.bind(this), false);
+	$("settings-ok-button").addEventListener("click", this.settingsOKClicked.bind(this), false);
+	$("system-button").addEventListener("click", this.systemClicked.bind(this), false);
+	$("system-ok-button").addEventListener("click", this.systemOKClicked.bind(this), false);
 	$("map_grid").addEventListener("click", this.partsClicked.bind(this), false);
 	$("map_grid").addEventListener("contextmenu", this.partsRightClicked.bind(this), false);
 	$("map_grid").addEventListener("mousemove", this.showCoords.bind(this), false);
@@ -684,7 +707,7 @@ function ViewModel(app) {
 	$("obj-image1").addEventListener("click", this.imageClicked.bind(this), false);
 	$("obj-image2").addEventListener("click", this.imageClicked.bind(this), false);
 	Array.from(document.querySelectorAll("[data-window]")).forEach((element) => {
-		element.addEventListener("click", this.toggleWindow.bind(this), false);
+		element.addEventListener("click", showWindow, false);
 	});
 	
 	option_xhr.onreadystatechange = () => {
@@ -701,55 +724,102 @@ function ViewModel(app) {
 
 ViewModel.prototype = {
 	addPartsTypeOption : function(json_src) {
+		this.variable = json_src.variable;
+		this.setting_formdata = json_src.setting;
+		
 		["bkg", "obj"].forEach((parts_group) => {
-			this.app.element.type_select[parts_group] = document.createElement("select");
-			this.app.element.type_select[parts_group].dataset.group = parts_group;
-			this.app.element.type_select[parts_group].dataset.subscript = 3;
-			this.app.element.setting_form[parts_group].insertBefore(this.app.element.type_select[parts_group], this.app.element.type_select[parts_group].nextSibling);
+			let element = document.createElement("select");
+			element.dataset.group = parts_group;
+			element.dataset.subscript = 3;
+			this.app.element.setting_form[parts_group].insertBefore(element, element.nextSibling);
 			for (let parts_name in json_src[parts_group]) {
 				const option = document.createElement("option");
 				option.textContent = parts_name;
 				
 				option.value = json_src[parts_group][parts_name]["data-subscript"];
 				option.dataset.attribute = JSON.stringify(json_src[parts_group][parts_name]);
-				this.app.element.type_select[parts_group].appendChild(option);
+				element.appendChild(option);
 			}
-			this.app.element.type_select[parts_group].addEventListener("change", this.createPartSettingWindow.bind(this), false);
-			this.app.element.type_select[parts_group].dataset.variable = JSON.stringify(json_src.variable);
+			element.addEventListener("change", this.createPartSettingWindow.bind(this), false);
+			this.app.element.type_select[parts_group] = element;
 		});
 	},
 	
-	/**
-	* 要素を生成する
-	* @param {String} tag_name 生成するタグの名前
-	* @param {Object} attributeAndChildNode そのタグに追加する属性と子ノードの情報
-	* @return {HTMLElement} 生成された要素
-	*/
-	createForm : function(tag_name, attributeAndChildNode) {
-		const attribute_form = document.createElement(tag_name);
-		Object.keys(attributeAndChildNode).forEach((element) => {
-			let element_attribute = attributeAndChildNode[element];
-			if(Array.isArray(element_attribute)) {
-				/* 配列は同じタグが連続するとみなす */
+	createForm : function(attributeAndChildNode, parentNode) {
+		Object.keys(attributeAndChildNode).forEach((tag_name) => {
+			let element_attribute = attributeAndChildNode[tag_name];
+			if (Array.isArray(element_attribute)) {
 				element_attribute.forEach((attribute) => {
-					let attribute_childForm = this.createForm(element, attribute);
-					attribute_childForm.textContent = attribute["data-name"] || "";
-					attribute_form.appendChild(attribute_childForm);
+					let attribute_form = document.createElement(tag_name);
+					let textNode = document.createTextNode(attribute["data-name"] || "");
+					attribute_form.appendChild(textNode);
+					this.createForm(attribute, attribute_form);
+					parentNode.appendChild(attribute_form);
 				});
-			} else if (typeof element_attribute === "object") {
-				let attribute_childForm = this.createForm(tag_name, element_attribute);
-				attribute_form.appendChild(attribute_childForm);
 			} else {
-				/* 属性を追加 */
-				attribute_form.setAttribute(element, element_attribute);
+				parentNode.setAttribute(tag_name, element_attribute);
 			};
 		});
-		return attribute_form;
+	},
+	
+	createLabel : function(alias) {
+		let attribute_name = document.createElement('label');
+		attribute_name.textContent = alias;
+		return attribute_name;
+	},
+	
+	settingsClicked : function(e) {
+		this.createSettingsWindow(this.app.element.setting_form.map, this.setting_formdata.map, this.app);
+		this.createSettingsWindow(this.app.element.setting_form.player, this.setting_formdata.player, this.app.player);
+	},
+	
+	settingsOKClicked : function(e) {
+		this.writeSettingsData(this.app.element.setting_form.map, this.app);
+		this.writeSettingsData(this.app.element.setting_form.player, this.app.player);
+		this.app.draw.drawPlayer(this.ctx.player);
+	},
+	
+	systemClicked : function(e) {
+		this.createSettingsWindow(this.app.element.setting_form.system, this.setting_formdata.system, null);
+	},
+	
+	systemOKClicked : function(e) {
+		
+	},
+	
+	writeSettingsData : function(element, group) {
+		Array.from(element).forEach((element) => {
+			group[element.dataset.subscript] = element.value;
+		});
+	},
+	
+	createSettingsWindow : function(element, data, group) {
+		while (element.lastChild) {
+		    element.removeChild(element.lastChild);
+		};
+		Object.keys(data).forEach((alias) => {
+			let label = this.createLabel(alias, element);
+			element.appendChild(label);
+			this.createForm(data[alias], element);
+		});
+		Array.from(element.querySelectorAll("[data-subscript]")).forEach((element) => {
+			if (element.dataset.string) {
+				let value = element.dataset.subscript;
+				element.dataset.messageid = value;
+				if (element.dataset.sysmsg) {
+					element.value = this.app.sysMsg[value];
+				} else {
+					element.value = this.app.message[value];
+				}
+			} else {
+				let value = group[element.dataset.subscript];
+				element.value = value;
+			};
+		});
 	},
 	
 	createPartSettingWindow : function(e) {
 		const target = e.target || e;
-		const variable = JSON.parse(target.dataset.variable);
 		const formData = JSON.parse(target.options[target.selectedIndex].dataset.attribute).formData;
 		const group = target.dataset.group;
 		const id = this.selectedID[group];
@@ -757,25 +827,22 @@ ViewModel.prototype = {
 		while (element.lastChild !== this.app.element.type_select[group]) {
 		    element.removeChild(element.lastChild);
 		};
-		
 		for (let alias of formData) {
-			const attribute_name = document.createElement('label');
-			element.appendChild(attribute_name);
-			attribute_name.textContent = alias;
-			Object.keys(variable[alias]).forEach((tag_name) => {
-				let attribute_form = this.createForm(tag_name, variable[alias][tag_name]);
-				attribute_name.appendChild(attribute_form);
-			});
-			Array.from(attribute_name.querySelectorAll("[data-subscript]")).forEach((element) => {
-				let value = this.app[group]["attribute"][id][element.dataset.subscript];
-				if (element.dataset.string) {
-					element.dataset.messageid = value;
-					element.value = this.app.message[value];
-				} else {
-					element.value = value;
-				};
-			});
+			let label = this.createLabel(alias);
+			element.appendChild(label);
+			this.createForm(this.variable[alias], label);
 		};
+		Array.from(element.querySelectorAll("[data-subscript]")).forEach((element) => {
+			let value = this.app[group]["attribute"][id][element.dataset.subscript];
+			if (element.dataset.string) {
+				element.dataset.messageid = value;
+				element.value = this.app.message[value];
+			} else if (element.dataset.typecheckbox) {
+				element.checked = Boolean(value);
+			} else {
+				element.value = value;
+			};
+		});
 	},
 	
 	showCoords : function(e) {
@@ -786,24 +853,28 @@ ViewModel.prototype = {
 	},
 	
 	imageClicked : function(e) {
-		let elem = document.createElement("img");
-		elem.class = "popup";
-		elem.id = "image-window";
-		elem.src = this.app.draw.img.src;
-		elem.dataset.group = e.target.dataset.group;
-		elem.dataset.frame = e.target.dataset.frame;
-		elem.style.background = "white";
-		elem.style.position = "absolute";
-		elem.style.top = e.clientX + "px";
-		elem.style.left = e.clientY + "px";
-		elem.addEventListener("click", this.imageSelectorClicked.bind(this), false);
-		document.body.appendChild(elem);
+		let container = document.createElement("div");
+		container.className = "popup";
+		container.id = "image-window";
+		container.style.position = "absolute";
+		container.style.left = e.clientX + "px";
+		container.style.top = e.clientY + "px";
+		container.style.right = "auto";
+		container.style.bottom = "auto";
+		document.body.appendChild(container);
+		
+		let selector = document.createElement("img");
+		selector.src = this.app.draw.img.src;
+		selector.dataset.group = e.target.dataset.group;
+		selector.dataset.frame = e.target.dataset.frame;
+		selector.addEventListener("click", this.imageSelectorClicked.bind(this), false);
+		container.appendChild(selector);
 	},
 	
 	imageSelectorClicked : function(e) {
 		let group = e.target.dataset.group;
-		let x = Math.floor(e.layerX / OBJECT_SIZE) * OBJECT_SIZE;
-		let y = Math.floor(e.layerY / OBJECT_SIZE) * OBJECT_SIZE;
+		let x = Math.floor(e.offsetX / OBJECT_SIZE) * OBJECT_SIZE;
+		let y = Math.floor(e.offsetY / OBJECT_SIZE) * OBJECT_SIZE;
 		
 		this.app[group].setSXSY(this.selectedID[group], parseInt(e.target.dataset.frame), x, y);
 		this.app.draw.drawMap(this.ctx.map[group], this.app[group]);
@@ -822,30 +893,15 @@ ViewModel.prototype = {
 		this.createPartSettingWindow(element);
 	},
 	
-	toggleWindow : function(e, force) {
-		let data_window = $(e) || $(e.target.dataset.window);
-		let left = (window.innerWidth - DIALOG_WIDTH) / 2;
-		let top = (window.innerHeight - DIALOG_HEIGHT) / 2;
-		if (typeof force === "boolean") {
-			data_window.hidden = force;
-		} else {
-			data_window.hidden = !data_window.hidden;
-		}
-		data_window.style.left = (left > 0 ? left : 0) + "px";
-		data_window.style.top =  (top > 0 ? top : 0) + "px";
-	},
-	
 	newFile: function(e) {
 		let imgFile = $("new-img").files[0];
 		this.app.newFile(imgFile);
-		this.toggleWindow("new-window");
 	},
 	
 	openFile : function(e) {
 		let datFile = $("open-dat").files[0];
 		let imgFile = $("open-img").files[0];
 		let bufferData = new FileReader();
-		this.toggleWindow("open-window");
 		
 		bufferData.readAsArrayBuffer(datFile);
 		
@@ -931,6 +987,8 @@ ViewModel.prototype = {
 				}
 				this.app.message[element.dataset.messageid] = element.value;
 				attribute[element.dataset.subscript] = element.dataset.messageid;
+			} if (element.dataset.typecheckbox) {
+				attribute[element.dataset.subscript] = Number(element.checked);
 			} else {
 				attribute[element.dataset.subscript] = element.value;
 			};
