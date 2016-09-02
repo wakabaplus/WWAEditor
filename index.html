@@ -4,6 +4,7 @@
 <title>WWAEditor</title>
 <script src="wwa.js"></script>
 <link rel="stylesheet" href="style.css" type="text/css">
+<link rel="stylesheet" href="WWAWing/wwa.css" type="text/css">
 </head>
 <body>
 <header>
@@ -17,13 +18,14 @@
 			<li>(<span id="coord-x">--</span>, <span id="coord-y">--</span>)</li>
 			<li><input type="button" id="settings-button" data-window="settings-window" value="マップの設定"></li>
 			<li><input type="button" id="system-button" data-window="system-window" value="システムメッセージの編集"></li>
-			<li>
+			<li><input type="button" id="preview-button" data-window="preview-window" value="プレビュー"></li>
+<!--			<li>
 				<select id="editor-mode" size="3">
 					<option value="0" selected>背景パーツ挿入</option>
 					<option value="1">物体パーツ挿入</option>
 					<option value="2">パーツ編集</option>
 				</select>
-			</li>
+			</li>-->
 		</ul>
 	</nav>
 </header>
@@ -66,6 +68,15 @@
 	</fieldset>
 	<input type="button" id="system-ok-button" data-window="system-window" value="OK">
 </div>
+<div class="popup" id="preview-window" hidden>
+	<div id="wing-container">
+	
+	</div>
+	<small>
+	<p> Internet RPG &quot;<a href="http://www.wwajp.com" class="wwa-copyright">World Wide Adventure</a>&quot; &copy;1996-2016 NAO</p>
+	<p> &quot;<a href="http://wwawing.com/" class="wwa-copyright">WWA Wing</a>&quot; &copy;2013-2016 WWA Wing Team</p>
+	</small>
+</div>
 <div class="HLayout">
 
 	<div class="pane layer-container">
@@ -77,11 +88,19 @@
 
 	<div class="VLayout">
 		<div class="pane">
-			<canvas id="selector-bkg" data-group="bkg"></canvas>
+			<h2>背景パーツ <span id="bkg-parts-number"></span></h2>
+			<div class="layer-container">
+				<canvas id="selector-bkg" data-group="bkg"></canvas>
+				<canvas id="selected-bkg" data-group="bkg" class="layer"></canvas>
+			</div>
 		</div>
-
+		
 		<div class="pane">
-			<canvas id="selector-obj" data-group="obj"></canvas>
+			<h2>物体パーツ <span id="bkg-parts-number"></span></h2>
+			<div class="layer-container">
+				<canvas id="selector-obj" data-group="obj"></canvas>
+				<canvas id="selected-obj" data-group="obj" class="layer"></canvas>
+			</div>
 		</div>
 	</div>
 

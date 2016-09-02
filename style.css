@@ -21,7 +21,7 @@ nav li {
 	vertical-align: middle;
 }
 
-.HLayout {
+.HLayout, .VLayout {
 	display: flex;
 }
 
@@ -37,7 +37,6 @@ nav li {
 }
 
 .VLayout {
-	display: flex;
 	flex-direction: column;
 }
 
@@ -52,9 +51,19 @@ nav li {
 	width: 25vw;
 }
 
+h2 {
+	margin: 0;
+	padding: 0.5rem;
+	background: linear-gradient(#000, #999);
+	color: white;
+	font-size: 100%;
+}
+
+.active h2 {
+	background: linear-gradient(#00F, #99F);
+}
+
 .layer-container {
-	display: flex;
-	flex-direction: column;
 	position: relative;
 	height: 600px;
 }

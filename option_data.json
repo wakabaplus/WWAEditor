@@ -689,6 +689,7 @@
 				{
 					"data-subscript": 16,
 					"type": "text",
+					"data-relative": true,
 					"size": "2"
 				}
 			]
@@ -698,6 +699,7 @@
 				{
 					"data-subscript": 17,
 					"type": "text",
+					"data-relative": true,
 					"size": "2"
 				}
 			]
@@ -883,6 +885,7 @@
 									"input": [
 										{
 											"data-subscript": 21,
+											"data-relative": true,
 											"type": "text",
 											"size": "2"
 										}
@@ -892,6 +895,7 @@
 									"input": [
 										{
 											"data-subscript": 25,
+											"data-relative": true,
 											"type": "text",
 											"size": "2"
 										}
@@ -901,6 +905,7 @@
 									"input": [
 										{
 											"data-subscript": 29,
+											"data-relative": true,
 											"type": "text",
 											"size": "2"
 										}
@@ -910,6 +915,7 @@
 									"input": [
 										{
 											"data-subscript": 33,
+											"data-relative": true,
 											"type": "text",
 											"size": "2"
 										}
@@ -919,6 +925,7 @@
 									"input": [
 										{
 											"data-subscript": 37,
+											"data-relative": true,
 											"type": "text",
 											"size": "2"
 										}
@@ -928,6 +935,7 @@
 									"input": [
 										{
 											"data-subscript": 41,
+											"data-relative": true,
 											"type": "text",
 											"size": "2"
 										}
@@ -937,6 +945,7 @@
 									"input": [
 										{
 											"data-subscript": 45,
+											"data-relative": true,
 											"type": "text",
 											"size": "2"
 										}
@@ -946,6 +955,7 @@
 									"input": [
 										{
 											"data-subscript": 49,
+											"data-relative": true,
 											"type": "text",
 											"size": "2"
 										}
@@ -955,6 +965,7 @@
 									"input": [
 										{
 											"data-subscript": 53,
+											"data-relative": true,
 											"type": "text",
 											"size": "2"
 										}
@@ -964,6 +975,7 @@
 									"input": [
 										{
 											"data-subscript": 57,
+											"data-relative": true,
 											"type": "text",
 											"size": "2"
 										}
@@ -982,6 +994,7 @@
 									"input": [
 										{
 											"data-subscript": 22,
+											"data-relative": true,
 											"type": "text",
 											"size": "2"
 										}
@@ -991,6 +1004,7 @@
 									"input": [
 										{
 											"data-subscript": 26,
+											"data-relative": true,
 											"type": "text",
 											"size": "2"
 										}
@@ -1000,6 +1014,7 @@
 									"input": [
 										{
 											"data-subscript": 30,
+											"data-relative": true,
 											"type": "text",
 											"size": "2"
 										}
@@ -1009,6 +1024,7 @@
 									"input": [
 										{
 											"data-subscript": 34,
+											"data-relative": true,
 											"type": "text",
 											"size": "2"
 										}
@@ -1018,6 +1034,7 @@
 									"input": [
 										{
 											"data-subscript": 38,
+											"data-relative": true,
 											"type": "text",
 											"size": "2"
 										}
@@ -1027,6 +1044,7 @@
 									"input": [
 										{
 											"data-subscript": 42,
+											"data-relative": true,
 											"type": "text",
 											"size": "2"
 										}
@@ -1036,6 +1054,7 @@
 									"input": [
 										{
 											"data-subscript": 46,
+											"data-relative": true,
 											"type": "text",
 											"size": "2"
 										}
@@ -1045,6 +1064,7 @@
 									"input": [
 										{
 											"data-subscript": 50,
+											"data-relative": true,
 											"type": "text",
 											"size": "2"
 										}
@@ -1054,6 +1074,7 @@
 									"input": [
 										{
 											"data-subscript": 54,
+											"data-relative": true,
 											"type": "text",
 											"size": "2"
 										}
@@ -1063,6 +1084,7 @@
 									"input": [
 										{
 											"data-subscript": 58,
+											"data-relative": true,
 											"type": "text",
 											"size": "2"
 										}

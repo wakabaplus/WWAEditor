@@ -163,13 +163,15 @@ function App() {
 
 App.prototype = {
 	newFile : function(imgFile) {
+		this.mapSize = 101;
+		
 		this.bkg = new Bkg();
 		this.bkg.newFile(this.mapSize);
 		this.obj = new Obj();
 		this.obj.newFile(this.mapSize);
 		
-		this.mapSize = 101;
 		this.fileName = "newmap.dat";
+		this.imgData = imgFile;
 		this.imgFileName = imgFile.name;
 		this.worldName = "";
 		this.pass = "";
@@ -184,9 +186,11 @@ App.prototype = {
 		let mapByte = 90;
 		let objByte;
 		let ptr = [0];
-		let numBkg = uint8to16(map, DATA_BKG_LENGTH);
-		let numObj = uint8to16(map, DATA_OBJ_LENGTH);
-		let numMsg = uint8to16(map, DATA_MSG_LENGTH);
+		let sum = {
+			bkg : uint8to16(map, DATA_BKG_LENGTH),
+			obj : uint8to16(map, DATA_OBJ_LENGTH),
+			msg : uint8to16(map, DATA_MSG_LENGTH)
+		};
 		
 		this.mapSize = uint8to16(map, 46);
 		this.fileName = fileName;
@@ -215,25 +219,17 @@ App.prototype = {
 				mapByte += 2;
 			};
 		};
-		mapByte = objByte + 2;
 		
-		for(let id = 0; id < numBkg; id++) {
-			this.bkg.attribute[id] = new Uint16Array(MAX_PARTS_PROP);
-			for(dat = 0; dat < MAX_PARTS_PROP; dat++) {
-				this.bkg.attribute[id][dat] = uint8to16(map, mapByte);
-				mapByte += 2;
-			}
-		}
-		
-		objByte = mapByte;
-		
-		for(let id = 0; id < numObj; id++) {
-			this.obj.attribute[id] = new Uint16Array(MAX_PARTS_PROP);
-			for(dat = 0; dat < MAX_PARTS_PROP; dat++) {
-				this.obj.attribute[id][dat] = uint8to16(map, objByte);
-				objByte += 2;
-			}
-		}
+		let byte = objByte + 2;
+		["bkg", "obj"].forEach((group) => {
+			for(let id = 0; id < sum[group]; id++) {
+				this[group].attribute[id] = new Uint16Array(MAX_PARTS_PROP);
+				for(dat = 0; dat < MAX_PARTS_PROP; dat++) {
+					this[group].attribute[id][dat] = uint8to16(map, byte);
+					byte += 2;
+				};
+			};
+		});
 		
 		this.pass = this.loadString(str, ptr);
 		if (this.pass.length > 0) {
@@ -244,7 +240,7 @@ App.prototype = {
 			}
 		}
 		
-		for (let i = 0; i < numMsg; i++) {
+		for (let i = 0; i < sum.msg; i++) {
 			this.message[i] = this.loadString(str, ptr);
 		}
 		this.worldName = this.loadString(str, ptr);
@@ -253,6 +249,7 @@ App.prototype = {
 		dummy = this.loadString(str, ptr);
 		dummy = this.loadString(str, ptr);
 		
+		this.imgData = imgFile;
 		this.imgFileName = this.loadString(str, ptr);
 		
 		this.sysMsg = [];
@@ -263,8 +260,8 @@ App.prototype = {
 		this.draw.init(this.bkg, this.obj, this.player, this.mapSize, imgFile);
 	},
 	
-	saveFile : function() {
-		let i, id, dat, file, element;
+	saveFile : function(callback) {
+		let i, id, dat, element;
 		let xmax, ymax;
 		let isNullarray;
 		let mapByte = 90;
@@ -273,7 +270,7 @@ App.prototype = {
 		let mapBufferSize = 90 + Math.pow(this.mapSize, 2) * 4 + (this.bkg.attribute.length + this.obj.attribute.length) * 120;
 		let mapArray = new Uint8Array(mapBufferSize);
 		let strArray = [];
-		let maxMapData = Math.max(this.bkg.mapData.length, this.obj.mapData.length) - 1; // lengthは1から数えるため
+		let maxMapData = Math.max(this.bkg.mapData.length, this.obj.mapData.length) - 1;
 		
 		mapArray[DATA_VERSION] = APP_VERSION;
 		uint16to8(mapArray, this.player.energyMax, DATA_ENERGYMAX);
@@ -309,27 +306,20 @@ App.prototype = {
 				mapByte += 2;
 			}
 		}
-		mapByte = objByte + 2;
+		
+		let byte = objByte + 2;
+		["bkg", "obj"].forEach((group) => {
+			for(let id = 0; id < this[group].attribute.length; id++) {
+				for(dat = 0; dat < MAX_PARTS_PROP; dat++) {
+					uint16to8(mapArray, this[group].attribute[id][dat], byte);
+					byte += 2;
+				};
+			};
+		});
 		
 		/* パーツ情報の保存 */
 		uint16to8(mapArray, this.bkg.attribute.length, DATA_BKG_LENGTH);
 		uint16to8(mapArray, this.obj.attribute.length, DATA_OBJ_LENGTH);
-		
-		for(id = 0; id < this.bkg.attribute.length; id++) {
-			for(dat = 0; dat < 60; dat++) {
-				uint16to8(mapArray, this.bkg.attribute[id][dat], mapByte);
-				mapByte += 2;
-			}
-		}
-		
-		objByte = mapByte;
-		
-		for(id = 0; id < this.obj.attribute.length; id++) {
-			for(dat = 0; dat < 60; dat++) {
-				uint16to8(mapArray, this.obj.attribute[id][dat], objByte);
-				objByte += 2;
-			}
-		}
 		
 		uint16to8(mapArray, this.message.length, DATA_MSG_LENGTH);
 		uint16to8(mapArray, getHash(mapArray), DATA_CHECK);
@@ -342,7 +332,9 @@ App.prototype = {
 		this.saveStr(strArray, this.worldName);
 		this.saveStr(strArray, ""); // 旧バージョンにて利用
 		this.saveStr(strArray, ""); // 旧バージョンにて利用
+		
 		this.saveStr(strArray, this.imgFileName);
+		
 		for (i = 0; i < 20; i++) {
 			this.saveStr(strArray, this.sysMsg[i]);
 		}
@@ -353,15 +345,21 @@ App.prototype = {
 			mapArray.buffer
 		]);
 		worker.onmessage = (e) => {
-			file = new File([e.data], this.fileName, {
+			let file = new File([e.data], this.fileName, {
 				type : "application/octet-stream"
 			});
-			element = document.createElement("a");
-			element.href = URL.createObjectURL(file);
-			document.body.appendChild(element);
-			element.click();
-			element.parentNode.removeChild(element);
-		}
+			let url = URL.createObjectURL(file);
+			callback(url);
+		};
+		
+	},
+	
+	downloadFile : function(url) {
+		let element = document.createElement("a");
+		element.href = url;
+		document.body.appendChild(element);
+		element.click();
+		element.parentNode.removeChild(element);
 	},
 	
 	checkFile : function(map, str) {
@@ -405,10 +403,9 @@ App.prototype = {
 	* @return {String} 文字列
 	*/
 	saveStr : function(src, str) {
-		let i, str_;
 		let buffer = "";
-		for (i = 0; i < str.length; i++) {
-			str_ = str.charCodeAt(i)
+		for (let i = 0; i < str.length; i++) {
+			let str_ = str.charCodeAt(i)
 			if (str_ === 0x0D) {
 				continue;
 			}
@@ -422,10 +419,10 @@ App.prototype = {
  * 描画を表す
  * @constructor
  */
-function Draw(bkg, obj, mapSize) {
-	this.bkg = bkg;
-	this.obj = obj;
-	this.mapSize = mapSize;
+function Draw() {
+	this.bkg = null;
+	this.obj = null;
+	this.mapSize = null;
 	this.img = null;
 }
 
@@ -437,13 +434,13 @@ Draw.prototype = {
 		this.player = player;
 		this.mapSize = mapSize;
 		this.img = new Image();
-		this.img.onload = () => {
+		this.img.addEventListener("load", (e) => {
 			this.drawAll();
-		};
-		Array.from(document.querySelectorAll("[data-main-canvas]")).forEach((element) => {
-			element.hidden = false;
-			element.width = OBJECT_SIZE * this.mapSize;
-			element.height = OBJECT_SIZE * this.mapSize;
+		});
+		this.img.addEventListener("error", (e) => {
+			alert(TEXT_BROKENIMG);
+			throw new Error("画像の読み込みに失敗しました。");
+			return;
 		});
 		bufferImg.readAsDataURL(image);
 		bufferImg.onload = (e) => {
@@ -452,6 +449,13 @@ Draw.prototype = {
 	},
 	
 	drawAll : function() {
+		Array.from(document.querySelectorAll("[data-main-canvas]")).forEach((element) => {
+			console.log(this.mapSize);
+			element.hidden = false;
+			element.width = OBJECT_SIZE * this.mapSize;
+			element.height = OBJECT_SIZE * this.mapSize;
+		});
+		
 		let bkg_parts_ctx = $("map_background").getContext('2d');
 		let obj_parts_ctx = $("map_object").getContext('2d');
 		this.drawMap(bkg_parts_ctx, this.bkg);
@@ -509,6 +513,19 @@ Draw.prototype = {
 			dh = OBJECT_SIZE;
 			ctx.drawImage(this.img, sx, sy, sw, sh, dx, dy, dw, dh);
 		}
+	},
+	
+	drawSelectedBorder : function(ctx, id) {
+		let x = Math.floor(id * OBJECT_SIZE % ctx.canvas.width);
+		let y = Math.floor(id * OBJECT_SIZE / ctx.canvas.width) * OBJECT_SIZE;
+		ctx.canvas.width = OBJECT_SIZE * 10;
+		ctx.canvas.height = MAX_PARTS * OBJECT_SIZE / ctx.canvas.width * OBJECT_SIZE;
+		ctx.strokeStyle = "red";
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.rect(x, y, OBJECT_SIZE, OBJECT_SIZE);
+		ctx.closePath();
+		ctx.stroke();
 	},
 	
 	imageSet : function(element, type, id, frame = 1) {
@@ -583,10 +600,10 @@ Draw.prototype = {
 function Parts() {
 	let attribute_ = [];
 	this.attribute = new Proxy(attribute_, {
-		get: (attribute, id, receiver) => {
+		get: (attribute, id) => {
 			if (typeof attribute[id] === "undefined") {
 				attribute[id] = new Uint16Array(MAX_PARTS_PROP);
-			}
+			};
 			return attribute[id];
 		}
 	});
@@ -663,46 +680,55 @@ function ViewModel(app) {
 	let option_xhr = new XMLHttpRequest();
 	
 	this.app = app;
-	this.mode = null;
+	this.active = "obj";
 	this.variable = null;
 	this.setting_formdata = null;
-	Object.defineProperty(this, "mode", {
-		set: (mode) => {
-			$("editor-mode").value = mode;
-		},
-		get: () => {
-			return parseInt($("editor-mode").value);
-		}
-	});
-	this.selectedID = {
-		bkg : 0,
-		obj : 0
+	this.isMouseDown = false;
+	this.selected = {
+		x : null,
+		y : null
 	};
-	this.ctx = {
-		player : $("map_player").getContext('2d'),
+	
+	this.element = {
+		player : $("map_player"),
 		map : {
-			bkg : $("map_background").getContext('2d'),
-			obj : $("map_object").getContext('2d')
+			bkg : $("map_background"),
+			obj : $("map_object")
 		},
 		selector : {
-			bkg : $("selector-bkg").getContext('2d'),
-			obj : $("selector-obj").getContext('2d')
+			bkg : $("selector-bkg"),
+			obj : $("selector-obj")
+		},
+		selected : {
+			bkg : $("selected-bkg"),
+			obj : $("selected-obj")
 		}
 	};
+	
+	this.selectedID = new Proxy({}, {
+		set: (obj, group, id) => {
+			this.app.draw.drawSelectedBorder(this.element.selected[group].getContext('2d'), id);
+			obj[group] = id;
+			return true;
+		}
+	});
 	
 	$("new-file").addEventListener("click", this.newFile.bind(this), false);
 	$("open-file").addEventListener("click", this.openFile.bind(this), false);
 	$("save-button").addEventListener("click", this.saveFile.bind(this), false);
+	$("preview-button").addEventListener("click", this.previewClicked.bind(this), false);
 	$("settings-button").addEventListener("click", this.settingsClicked.bind(this), false);
 	$("settings-ok-button").addEventListener("click", this.settingsOKClicked.bind(this), false);
 	$("system-button").addEventListener("click", this.systemClicked.bind(this), false);
 	$("system-ok-button").addEventListener("click", this.systemOKClicked.bind(this), false);
-	$("map_grid").addEventListener("click", this.partsClicked.bind(this), false);
-	$("map_grid").addEventListener("contextmenu", this.partsRightClicked.bind(this), false);
-	$("map_grid").addEventListener("mousemove", this.showCoords.bind(this), false);
-	$("selector-bkg").addEventListener("click", this.selectorClicked.bind(this), false);
-	$("selector-obj").addEventListener("click", this.selectorClicked.bind(this), false);
-	$("editor-mode").addEventListener("change", this.changeMode.bind(this), false);
+	$("map_grid").addEventListener("click", this.map.onClick.bind(this), false);
+	$("map_grid").addEventListener("mousedown", this.map.onMouseDown.bind(this), false);
+	$("map_grid").addEventListener("mouseup", this.map.onMouseUp.bind(this), false);
+	$("map_grid").addEventListener("contextmenu", this.map.onContextMenu.bind(this), false);
+	$("map_grid").addEventListener("mousemove", this.map.onMove.bind(this), false);
+	$("selected-bkg").addEventListener("click", this.selectorClicked.bind(this), false);
+	$("selected-obj").addEventListener("click", this.selectorClicked.bind(this), false);
+// 	$("editor-mode").addEventListener("change", this.changeMode.bind(this), false);
 	$("bkg-image").addEventListener("click", this.imageClicked.bind(this), false);
 	$("obj-image1").addEventListener("click", this.imageClicked.bind(this), false);
 	$("obj-image2").addEventListener("click", this.imageClicked.bind(this), false);
@@ -776,7 +802,7 @@ ViewModel.prototype = {
 	settingsOKClicked : function(e) {
 		this.writeSettingsData(this.app.element.setting_form.map, this.app);
 		this.writeSettingsData(this.app.element.setting_form.player, this.app.player);
-		this.app.draw.drawPlayer(this.ctx.player);
+		this.app.draw.drawAll();
 	},
 	
 	systemClicked : function(e) {
@@ -784,12 +810,54 @@ ViewModel.prototype = {
 	},
 	
 	systemOKClicked : function(e) {
+		this.writeSettingsData(this.app.element.setting_form.system, null);
+	},
+ 
+	previewClicked : function(e) {
+		while ($("wing-container").lastChild) {
+		    $("wing-container").removeChild($("wing-container").lastChild);
+		};
 		
+		this.app.saveFile((url) => {
+			let audio_script = document.createElement("script");
+			audio_script.src = "WWAWing/audio/audio.min.js";
+			document.head.appendChild(audio_script);
+			
+			let wwa = document.createElement("script");
+			wwa.src = "WWAWing/wwa.js";
+			document.head.appendChild(wwa);
+			
+			let wwaload = document.createElement("script");
+			wwaload.src = "WWAWing/wwaload.noworker.js"
+			document.head.appendChild(wwaload);
+			
+			let container = document.createElement("div");
+			container.id = "wwa-wrapper";
+			container.className = "wwa-size-box";
+			container.dataset.wwaLoader = "WWAWing/wwaload.js";
+			container.dataset.wwaUrlgateEnable = true;
+			container.dataset.wwaImgdata = this.app.draw.img.src;
+			container.dataset.wwaTitleImg = "WWAWing/cover.gif";
+			container.dataset.wwaMapdata = url;
+			$("preview-window").style.width = "700px";
+			$("preview-window").style.height = "600px";
+			console.log($("preview-window").style);
+			$("wing-container").appendChild(container);
+		});
 	},
 	
 	writeSettingsData : function(element, group) {
 		Array.from(element).forEach((element) => {
-			group[element.dataset.subscript] = element.value;
+			if (element.dataset.string) {
+				let value = element.dataset.subscript;
+				if (element.dataset.sysmsg) {
+					this.app.sysMsg[value] = element.value;
+				} else {
+					this.app.message[value] = element.value;
+				};
+			} else {
+				group[element.dataset.subscript] = element.value;
+			};
 		});
 	},
 	
@@ -810,7 +878,7 @@ ViewModel.prototype = {
 					element.value = this.app.sysMsg[value];
 				} else {
 					element.value = this.app.message[value];
-				}
+				};
 			} else {
 				let value = group[element.dataset.subscript];
 				element.value = value;
@@ -824,6 +892,7 @@ ViewModel.prototype = {
 		const group = target.dataset.group;
 		const id = this.selectedID[group];
 		const element = this.app.element.setting_form[group];
+		
 		while (element.lastChild !== this.app.element.type_select[group]) {
 		    element.removeChild(element.lastChild);
 		};
@@ -839,15 +908,78 @@ ViewModel.prototype = {
 				element.value = this.app.message[value];
 			} else if (element.dataset.typecheckbox) {
 				element.checked = Boolean(value);
+			} else if (element.dataset.relative) {
+				if (value === 9000) {
+					element.value = "P";
+				} else if (value === 10000) {
+					element.value = "+0";
+				} else if (value > 10000 && value < 11000) {
+					element.value = "+" + (value - 10000);
+				} else if (value < 10000 && value > 9000) {
+					element.value = value - 10000;
+				} else {
+					element.value = value;
+				};
 			} else {
 				element.value = value;
 			};
 		});
 	},
 	
-	showCoords : function(e) {
-		let x = Math.floor(e.layerX / OBJECT_SIZE);
-		let y = Math.floor(e.layerY / OBJECT_SIZE);
+	map : {
+		onClick : function(e) {
+			this.writePartsData(this.app.bkg.attribute[this.selectedID.bkg], "bkg");
+			this.writePartsData(this.app.obj.attribute[this.selectedID.obj], "obj");
+			this.insertPart(e, this.element.map[this.active]);
+		},
+		
+		onMouseDown : function(e) {
+			this.isMouseDown = true;
+			this.selected = {
+				x : Math.floor(e.offsetX / OBJECT_SIZE),
+				y : Math.floor(e.offsetY / OBJECT_SIZE)
+			};
+			console.log(this.selected);
+		},
+		
+		onMouseUp : function(e) {
+			this.isMouseDown = false;
+			
+			let x = {
+				min : Math.min(Math.floor(e.offsetX / OBJECT_SIZE), this.selected.x),
+				max : Math.max(Math.floor(e.offsetX / OBJECT_SIZE), this.selected.x)
+			};
+			let y = {
+				min : Math.min(Math.floor(e.offsetY / OBJECT_SIZE), this.selected.y),
+				max : Math.max(Math.floor(e.offsetY / OBJECT_SIZE), this.selected.y)
+			};
+			
+			for (let i = x.min; i <= x.max; i++) {
+				for (let j = y.min; j <= y.max; j++) {
+					this.insertPart({
+						offsetX : i * OBJECT_SIZE,
+						offsetY : j * OBJECT_SIZE
+					}, this.element.map[this.active]);
+				};
+			};
+			this.selected = null;
+		},
+		
+		onMove : function(e) {
+			this.updateCoords(e);
+		},
+		
+		onContextMenu : function(e) {
+			e.preventDefault();
+			this.writePartsData(this.app.bkg.attribute[this.selectedID.bkg], "bkg");
+			this.writePartsData(this.app.obj.attribute[this.selectedID.obj], "obj");
+			this.editPart(e);
+		}
+	},
+	
+	updateCoords : function(e) {
+		let x = Math.floor(e.offsetX / OBJECT_SIZE);
+		let y = Math.floor(e.offsetY / OBJECT_SIZE);
 		$("coord-x").textContent = x;
 		$("coord-y").textContent = y;
 	},
@@ -877,18 +1009,16 @@ ViewModel.prototype = {
 		let y = Math.floor(e.offsetY / OBJECT_SIZE) * OBJECT_SIZE;
 		
 		this.app[group].setSXSY(this.selectedID[group], parseInt(e.target.dataset.frame), x, y);
-		this.app.draw.drawMap(this.ctx.map[group], this.app[group]);
-		this.app.draw.drawSelector(this.ctx.selector[group], this.app[group]);
+		this.app.draw.drawMap(this.element.map[group].getContext('2d'), this.app[group]);
+		this.app.draw.drawSelector(this.element.selector[group].getContext('2d'), this.app[group]);
 		this.app.draw.drawSelectedParts(this.selectedID);
 		document.body.removeChild($("image-window"))
 	},
 	
 	changeMode : function(e) {
-		this.mode = parseInt(e.target.value);
 	},
 	
 	typeSet : function(element, id) {
-		element.parentNode.hidden = (id === 0);
 		element.value = this.app[element.dataset.group]["attribute"][id][3];
 		this.createPartSettingWindow(element);
 	},
@@ -917,31 +1047,12 @@ ViewModel.prototype = {
 	},
 	
 	saveFile : function(e) {
-		this.app.saveFile();
-	},
-	
-	partsClicked : function(e) {
-		this.writePartsData(this.app.bkg.attribute[this.selectedID.bkg], "bkg");
-		this.writePartsData(this.app.obj.attribute[this.selectedID.obj], "obj");
-		if (this.mode === APP_MODE_BKG_INSERT) {
-			this.insertPart(e, $("map_background"));
-		} else if (this.mode === APP_MODE_OBJ_INSERT) {
-			this.insertPart(e, $("map_object"));
-		} else if (this.mode === APP_MODE_EDIT) {
-			this.editPart(e);
-		};
-	},
-	
-	partsRightClicked : function(e) {
-		e.preventDefault();
-		this.writePartsData(this.app.bkg.attribute[this.selectedID.bkg], "bkg");
-		this.writePartsData(this.app.obj.attribute[this.selectedID.obj], "obj");
-		this.editPart(e);
+		this.app.saveFile(this.app.downloadFile);
 	},
 	
 	insertPart : function(e, element) {
-		let x = Math.floor(e.layerX / OBJECT_SIZE);
-		let y = Math.floor(e.layerY / OBJECT_SIZE);
+		let x = Math.floor(e.offsetX / OBJECT_SIZE);
+		let y = Math.floor(e.offsetY / OBJECT_SIZE);
 		let group = element.dataset.group;
 		let ctx = element.getContext('2d');
 		this.app[group]["mapData"][y][x] = this.selectedID[group];
@@ -949,8 +1060,8 @@ ViewModel.prototype = {
 	},
 	
 	editPart : function(e) {
-		let x = Math.floor(e.layerX / OBJECT_SIZE);
-		let y = Math.floor(e.layerY / OBJECT_SIZE);
+		let x = Math.floor(e.offsetX / OBJECT_SIZE);
+		let y = Math.floor(e.offsetY / OBJECT_SIZE);
 		
 		["bkg", "obj"].forEach((group) => {
 			this.selectedID[group] = this.app[group].mapData[y][x];
@@ -960,16 +1071,13 @@ ViewModel.prototype = {
 	},
 	
 	selectorClicked : function(e) {
-		let x = Math.floor(e.layerX / OBJECT_SIZE);
-		let y = Math.floor(e.layerY / OBJECT_SIZE);
-		let type = e.target.dataset.group;
-		if (this.mode !== APP_MODE_EDIT) {
-			this.mode = type === "bkg" ? APP_MODE_BKG_INSERT : APP_MODE_OBJ_INSERT;
-		};
+		let x = Math.floor(e.offsetX / OBJECT_SIZE);
+		let y = Math.floor(e.offsetY / OBJECT_SIZE);
+		this.active = e.target.dataset.group;
 		this.writePartsData(this.app.bkg.attribute[this.selectedID.bkg], "bkg");
 		this.writePartsData(this.app.obj.attribute[this.selectedID.obj], "obj");
-		this.selectedID[type] = 10 * y + x;
-		this.typeSet(this.app.element.type_select[type], this.selectedID[type]);
+		this.selectedID[this.active] = 10 * y + x;
+		this.typeSet(this.app.element.type_select[this.active], this.selectedID[this.active]);
 		this.app.draw.drawSelectedParts(this.selectedID);
 	},
 	
@@ -987,8 +1095,18 @@ ViewModel.prototype = {
 				}
 				this.app.message[element.dataset.messageid] = element.value;
 				attribute[element.dataset.subscript] = element.dataset.messageid;
-			} if (element.dataset.typecheckbox) {
+			} else if (element.dataset.typecheckbox) {
 				attribute[element.dataset.subscript] = Number(element.checked);
+			} else if (element.dataset.relative) {
+				if (element.value === "P") {
+					attribute[element.dataset.subscript] = 9000;
+				} else if (element.value[0] === "+") {
+					attribute[element.dataset.subscript] = parseInt(element.value.replace(/[^0-9^\.]/g,"")) + 10000;
+				} else if (element.value[0] === "-") {
+					attribute[element.dataset.subscript] = 10000 - parseInt(element.value.replace(/[^0-9^\.]/g,""));
+				} else {
+					attribute[element.dataset.subscript] = element.value;
+				};
 			} else {
 				attribute[element.dataset.subscript] = element.value;
 			};
