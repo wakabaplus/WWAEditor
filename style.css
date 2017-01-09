@@ -48,7 +48,7 @@ nav li {
 	resize: both;
 	margin: 5px;
 	height: 240px;
-	width: 25vw;
+	width: 420px;
 }
 
 h2 {
@@ -95,10 +95,6 @@ h2 {
 .popup li {
 	display: inline-block;
 	width: 100%;
-}
-
-.image img {
-	position: absolute;
 }
 
 header {

@@ -1,0 +1,276 @@
+{
+	"map": {
+		"ワールド名" : {
+			"input" : [
+				{
+					"data-subscript" : "worldName",
+					"type": "text"
+				}
+			]
+		},
+		"画像ファイル" : {
+			"input" : [
+				{
+					"data-subscript" : "imgFileName",
+					"type": "text"
+				}
+			]
+		},
+		"暗証番号" : {
+			"input" : [
+				{
+					"data-subscript" : "pass",
+					"type": "password"
+				}
+			]
+		},
+		"マップサイズ": {
+			"div": [
+				{
+					"select": [
+						{
+							"data-subscript" : "mapSize",
+							"option": [
+								{
+									"data-name": "101 × 101",
+									"value": 101
+								},
+								{
+									"data-name": "201 × 201",
+									"value": 201
+								},
+								{
+									"data-name": "301 × 301",
+									"value": 301
+								},
+								{
+									"data-name": "401 × 401",
+									"value": 401
+								},
+								{
+									"data-name": "501 × 501",
+									"value": 501
+								},
+								{
+									"data-name": "601 × 601",
+									"value": 601
+								},
+								{
+									"data-name": "701 × 701",
+									"value": 701
+								},
+								{
+									"data-name": "801 × 801",
+									"value": 801
+								},
+								{
+									"data-name": "901 × 901",
+									"value": 901
+								},
+								{
+									"data-name": "1001 × 1001",
+									"value": 1001
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	},
+	"player": {
+		"プレーヤー初期位置" : {
+			"div": [
+				{
+					"class": "HLayout",
+					"label": [
+						{
+							"data-name": "X座標",
+							"input" : [
+								{
+									"data-subscript" : "x",
+									"data-where" : "player",
+									"type": "number",
+									"min": 0
+								}
+							]
+						},
+						{
+							"data-name": "Y座標",
+							"input" : [
+								{
+									"data-subscript" : "y",
+									"data-where" : "player",
+									"type": "number",
+									"min": 0
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		"ゲームオーバー位置" : {
+			"div": [
+				{
+					"class": "HLayout",
+					"label": [
+						{
+							"data-name": "X座標",
+							"input" : [
+								{
+									"data-subscript" : "overX",
+									"data-where" : "player",
+									"type": "number",
+									"min": 0
+								}
+							]
+						},
+						{
+							"data-name": "Y座標",
+							"input" : [
+								{
+									"data-subscript" : "overY",
+									"data-where" : "player",
+									"type": "number",
+									"min": 0
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		"初期ステータス" : {
+			"div": [
+				{
+					"label": [
+						{
+							"data-name": "生命力上限",
+							"input" : [
+								{
+									"data-subscript" : "energyMax",
+									"data-where" : "player",
+									"type": "number",
+									"min": 0
+								}
+							]
+						},
+						{
+							"data-name": "生命力",
+							"input" : [
+								{
+									"data-subscript" : "energy",
+									"data-where" : "player",
+									"type": "number",
+									"min": 0
+								}
+							]
+						},
+						{
+							"data-name": "攻撃力",
+							"input" : [
+								{
+									"data-subscript" : "strength",
+									"data-where" : "player",
+									"type": "number",
+									"min": 0
+								}
+							]
+						},
+						{
+							"data-name": "防御力",
+							"input" : [
+								{
+									"data-subscript" : "defence",
+									"data-where" : "player",
+									"type": "number",
+									"min": 0
+								}
+							]
+						},
+						{
+							"data-name": "所持金",
+							"input" : [
+								{
+									"data-subscript" : "gold",
+									"data-where" : "player",
+									"type": "number",
+									"min": 0
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	},
+	"system": {
+		"リンクするときに表示する確認メッセージ" : {
+			"input" : [
+				{
+					"data-subscript" : "5",
+					"data-string" : true,
+					"type": "text"
+				}
+			]
+		},
+		"物を買うときに所持金が足りない場合のメッセージ" : {
+			"input" : [
+				{
+					"data-subscript" : "6",
+					"data-string" : true,
+					"type": "text"
+				}
+			]
+		},
+		"物を売るときにアイテムを持っていない場合のメッセージ" : {
+			"input" : [
+				{
+					"data-subscript" : "7",
+					"data-string" : true,
+					"type": "text"
+				}
+			]
+		},
+		"アイテムを使用するときの確認メッセージ" : {
+			"input" : [
+				{
+					"data-subscript" : "8",
+					"data-string" : true,
+					"type": "text"
+				}
+			]
+		},
+		"クリック型アイテムを取ったときのメッセージ（最初の一度のみ表示）" : {
+			"input" : [
+				{
+					"data-subscript" : "0",
+					"data-sysmsg" : true,
+					"data-string" : true,
+					"type": "text"
+				}
+			]
+		},
+		"アイテムがこれ以上持てないときの確認メッセージ" : {
+			"input" : [
+				{
+					"data-subscript" : "1",
+					"data-sysmsg" : true,
+					"data-string" : true,
+					"type": "text"
+				}
+			]
+		},
+		"ゲームスタート時の効果音読み込みの確認メッセージ" : {
+			"input" : [
+				{
+					"data-subscript" : "2",
+					"data-sysmsg" : true,
+					"data-string" : true,
+					"type": "text"
+				}
+			]
+		}
+	}
+}
